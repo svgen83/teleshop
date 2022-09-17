@@ -35,6 +35,7 @@ if __name__ == "__main__":
     client_credentials_response = requests.post('https://api.moltin.com/oauth/access_token',data=params)
     client_credentials_response.raise_for_status()
     client_credentials_token = f'Bearer {client_credentials_response.json()["access_token"]}'
+    
     print(client_credentials_token)
 
 ##    implicit_response = requests.post('https://api.moltin.com/oauth/access_token',data=params2)
@@ -48,18 +49,14 @@ if __name__ == "__main__":
 
 
 
-    catalog_rule_response = requests.post('https://api.moltin.com/pcm/catalogs/rules',
-                             headers={'Authorization': client_credentials_token,
-                                      "Content-Type": "application/json"},
-                             json={'data': {
-                                 'type': 'catalog_rule',
-                                 'attributes': {
-                                     'name': 'Preferred customers',
-                                     'catalog_id': 'legacy'},
-                                 }})
-    catalog_rule_response.raise_for_status()
-    catalog_rule = catalog_rule_response.json()
-    pprint(catalog_rule)
+    create_cart = requests.post('https://api.moltin.com/v2/carts/',
+                            headers={'Authorization': client_credentials_token,
+                            "Content-Type": 'application/json'},
+                            json = {"data":{"name":"abc"}})
+                                          
+    create_cart.raise_for_status()
+    cart = create_cart.json()
+    pprint(cart)
     
 
 ##    catalog_rule_response = requests.get("https://api.moltin.com/pcm/catalogs/rules",headers={'Authorization': client_credentials_token})
@@ -74,24 +71,24 @@ if __name__ == "__main__":
           "quantity": 1
           }
         }
-##    pprint(products_for_sale)
+    pprint(products_for_sale)
 
     
     into_cart_response = requests.post('https://api.moltin.com/v2/carts/abc/items',
                          headers={'Authorization': client_credentials_token,
-                                  'Content-Type': 'application/json',
-                                  "X-Moltin-Customer-Token":"5000000",
-                                  "EP-Channel":"555555",
-                                  "EP-Context-Tag":"11111111"
+                                  'Content-Type': 'application/json'
+                                  #"X-Moltin-Customer-Token":"5000000",
+                                  #"EP-Channel":"555555",
+                                  #"EP-Context-Tag":"11111111"
                                   },
-                         json={"data": products_for_sale} )
+                         json={"data": products_for_sale})
     into_cart_response.raise_for_status()
     print(into_response.json())
 
     
     carts_response = requests.get("https://api.moltin.com/v2/carts/abc",headers={'Authorization': client_credentials_token})
     carts_response.raise_for_status()
-    pprint(carts_response.json())
+    #pprint(carts_response.json())
 
 
 ##
