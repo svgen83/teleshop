@@ -1,3 +1,4 @@
+import json
 import os
 import requests
 from pprint import pprint
@@ -5,93 +6,123 @@ from pprint import pprint
 
 from dotenv import load_dotenv
 
-def get_resp():
-    url = "https://api.moltin.com/v2/products"
-    client_id = os.getenv("CLIENT_ID")
-    client_secret = os.getenv("CLIENT_SECRET")
-    store_id = os.getenv("STORE_ID")
-    
-    headers = {"Authorization": token}
-    params = {"client_id": "client_id", "client_secret": client_secret,
-              "store_id": store_id}
-    response = requests.get(clicks_endpoint, params=params)
+def get_access_token():
+    url = "https://api.moltin.com/oauth/access_token"
+    params = {"client_id": os.getenv("CLIENT_ID"),
+              "client_secret": os.getenv("CLIENT_SECRET"),
+              "grant_type": "client_credentials"
+##              "grant_type": "implicit"
+              }
+    response = requests.post(url,data=params)
     response.raise_for_status()
-    r = response.json()
-    print(response)
-
-if __name__ == "__main__":
-    load_dotenv()
-    url = "https://api.moltin.com/pcm/products"
-    client_id = os.getenv("CLIENT_ID")
-    client_secret = os.getenv("CLIENT_SECRET")
-    
-    params = {"client_id": client_id,
-              "client_secret": client_secret,
-              "grant_type": "client_credentials"}
-    params2 = {"client_id": client_id,
-              "grant_type": "implicit"}
+    return f'Bearer {response.json()["access_token"]}'
     
 
-    client_credentials_response = requests.post('https://api.moltin.com/oauth/access_token',data=params)
-    client_credentials_response.raise_for_status()
-    client_credentials_token = f'Bearer {client_credentials_response.json()["access_token"]}'
-    
-    print(client_credentials_token)
+def create_customer(access_token, name, email, password):
+    headers = {'Authorization': access_token,
+               'Content-Type': 'application/json'}
+    json_data = {
+        'data': {
+            'type': 'customer',
+            'name': name,
+            'email': email,
+            'password': password}}
+    response = requests.post('https://api.moltin.com/v2/customers', headers=headers, json=json_data)
+    response.raise_for_status()
+    return response.json()
 
-##    implicit_response = requests.post('https://api.moltin.com/oauth/access_token',data=params2)
-##    implicit_response.raise_for_status()
-##    implicit_token = f'Bearer {implicit_response.json()["access_token"]}'
-##    print(implicit_token)
-    
-    products_response = requests.get(url,headers={'Authorization': client_credentials_token})
-    products_response.raise_for_status()
-    products = products_response.json()
+def get_customer_token(access_token, email, password):
+   headers = {'Authorization': access_token,
+              'Content-Type': 'application/json'}
+   json_data = {
+       'data': {
+           'type': 'token',
+           'email': email,
+           'password': password,
+           'authentication_mechanism': 'password'
+           }
+       }
+   response = requests.post('https://api.moltin.com/v2/customers/tokens',
+                            headers=headers, json=json_data)
+   response.raise_for_status()
+   return response.json()["data"]["token"]
 
 
-
-    create_cart = requests.post('https://api.moltin.com/v2/carts/',
-                            headers={'Authorization': client_credentials_token,
+def create_cart(access_token, client_name):
+    response = requests.post('https://api.moltin.com/v2/carts/',
+                            headers={'Authorization': access_token,
                             "Content-Type": 'application/json'},
-                            json = {"data":{"name":"abc"}})
+                            json = {"data":{"name":client_name}})
                                           
-    create_cart.raise_for_status()
-    cart = create_cart.json()
-    pprint(cart)
-    
+    response.raise_for_status()
+    return response.json()
 
-##    catalog_rule_response = requests.get("https://api.moltin.com/pcm/catalogs/rules",headers={'Authorization': client_credentials_token})
-##    catalog_rule_response.raise_for_status()
-##    catalog_rule = catalog_rule_response.json()
-##    pprint(catalog_rule)
-        
-    products_for_sale = {
+def create_product(access_token):
+    headers = {'Authorization': access_token,
+               'Content-Type': 'application/json'
+               }
+    params = {'data': {
+        'type': 'product',
+        'name': 'red_fish',
+        'slug': 'red_fish',
+        'sku': '2',
+        'manage_stock': True,
+        'description': 'no description',
+        'price': [{'amount': 1000,
+                   'currency': 'USD',
+                   "includes_tax": True}],
+        "status": 'live',
+        'commodity_type': 'physical'
+    }}
+    response = requests.post('https://api.moltin.com/v2/products',
+                             headers=headers,
+                             json=params)
+    response.raise_for_status()
+    print(response.json())
+
+
+                                
+def get_products(access_token):
+    headers = {'Authorization': access_token}
+    response = requests.get('https://api.moltin.com/v2/products', headers=headers)
+    response.raise_for_status()
+    print(response.json())
+    return response.json()
+
+
+def add_to_cart(access_token,customer_token, client_name, products, quantity):
+    headers = {'Authorization': access_token,
+               'Content-Type': 'application/json',
+               'X-Moltin-Customer-Token': customer_token,
+               'EP-Channel': '',
+               'EP-Context-Tag': ''
+               }
+    
+    data = {
         "data": {
           "id": products["data"][0]["id"],
           "type": "cart_item",
-          "quantity": 1
+          "quantity": quantity
           }
         }
-    pprint(products_for_sale)
+##    print(products["data"][0]["id"])
+    response = requests.post(f'https://api.moltin.com/v2/carts/{client_name}/items',
+                             headers=headers, json=data)
+##    response.raise_for_status()     
+    return response.json()
 
     
-    into_cart_response = requests.post('https://api.moltin.com/v2/carts/abc/items',
-                         headers={'Authorization': client_credentials_token,
-                                  'Content-Type': 'application/json'
-                                  #"X-Moltin-Customer-Token":"5000000",
-                                  #"EP-Channel":"555555",
-                                  #"EP-Context-Tag":"11111111"
-                                  },
-                         json={"data": products_for_sale})
-    into_cart_response.raise_for_status()
-    print(into_response.json())
 
-    
-    carts_response = requests.get("https://api.moltin.com/v2/carts/abc",headers={'Authorization': client_credentials_token})
-    carts_response.raise_for_status()
-    #pprint(carts_response.json())
+if __name__ == "__main__":
+    load_dotenv()
 
+    access_token = get_access_token()
+##    create_product(access_token)
 
-##
-##    items_response = requests.get('https://api.moltin.com/v2/carts/abc/items', headers={'Authorization': client_credentials_token})
-##    items_response.raise_for_status()
-##    pprint(items_response.json())     
+####    pprint(create_customer(access_token, "svg_2", "s@g.ru", "1111"))
+    products = get_products(access_token)
+    customer_token = get_customer_token(access_token, "s@g.ru", "1111")
+##    pprint(create_cart(access_token, "svg_2"))
+##    print(customer_token)
+    pprint(add_to_cart(access_token,customer_token, "svg_2", products, 2))
+       
