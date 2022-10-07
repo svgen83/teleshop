@@ -7,24 +7,33 @@ import redis
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Filters, Updater
 from telegram.ext import CallbackQueryHandler, CommandHandler, MessageHandler
+from teleshop import get_access_token, get_products
 
 _database = None
 
-def start(update, context):
-    """
-    Хэндлер для состояния START.
-    
-    Бот отвечает пользователю фразой "Привет!" и переводит его в состояние ECHO.
-    Теперь в ответ на его команды будет запускаеться хэндлер echo.
-    """
-    keyboard = [[InlineKeyboardButton("Option 1", callback_data='1'),
-                 InlineKeyboardButton("Option 2", callback_data='2')],
 
-                [InlineKeyboardButton("Option 3", callback_data='3')]]
+def start(update, context):
+    access_token = get_access_token()
+    products = get_products(access_token)
+    keyboard = []
+    for product in products:
+        button = [InlineKeyboardButton(product['name'],
+                  callback_data=product['id'])]
+        keyboard.append(button)
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.message.reply_text('Привет!Мы продаём рыбов, а не только показываем!',
     reply_markup=reply_markup)
-    return "ECHO"
+    return 'HANDLE_MENU'
+    
+    
+def handle_menu(update, context):
+    query = update.callback_query
+    print(query)
+
+    context.edit_message_text(text="Selected option: {}".format(query.data),
+                          chat_id=query.message.chat_id,
+                          message_id=query.message.message_id)
+    return 'START'
 
 
 def echo(update, context):
@@ -68,7 +77,8 @@ def handle_users_reply(update, context):
     
     states_functions = {
         'START': start,
-        'ECHO': echo
+        'ECHO': echo,
+        'HANDLE_MENU': handle_menu
     }
     state_handler = states_functions[user_state]
     # Если вы вдруг не заметите, что python-telegram-bot перехватывает ошибки.
@@ -79,6 +89,7 @@ def handle_users_reply(update, context):
         db.set(chat_id, next_state)
     except Exception as err:
         print(err)
+        
 
 def get_database_connection():
     """
@@ -97,9 +108,14 @@ if __name__ == '__main__':
 
     load_dotenv()
     token = os.getenv("TG_TOKEN")
+    logging.basicConfig(
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        level=logging.INFO)
+        
     updater = Updater(token)
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CallbackQueryHandler(handle_users_reply))
     dispatcher.add_handler(MessageHandler(Filters.text, handle_users_reply))
     dispatcher.add_handler(CommandHandler('start', handle_users_reply))
     updater.start_polling()
+    updater.idle()
