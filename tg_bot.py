@@ -3,13 +3,20 @@ from dotenv import load_dotenv
 import os
 import logging
 import redis
+import textwrap
+
+from pprint import pprint
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Filters, Updater
 from telegram.ext import CallbackQueryHandler, CommandHandler, MessageHandler
-from teleshop import get_access_token, get_products
+from teleshop import get_access_token, get_products, get_product_details
+from teleshop import get_img_link
+
 
 _database = None
+
+logger = logging.getLogger(__name__)
 
 
 def start(update, context):
@@ -28,12 +35,32 @@ def start(update, context):
     
 def handle_menu(update, context):
     query = update.callback_query
-    print(query)
+    query.answer()
+    query.message.delete()
+    #pprint(query.data)
+    access_token = get_access_token()
+    product_details = get_product_details(access_token, query.data)
+    message = create_message(product_details)
+    img_lnk = get_img_link(access_token, product_details['img_id'])
+    logger.info(message)
+    #query.edit_message_text(text=message)
+    context.bot.send_photo(chat_id=query.message.chat_id, photo=img_lnk,
+                           caption=message)
+                            #chat_id=query.message.chat_id,
+                           # message_id=query.message.message_id)
+    return 'HANDLE_MENU'
 
-    context.edit_message_text(text="Selected option: {}".format(query.data),
-                          chat_id=query.message.chat_id,
-                          message_id=query.message.message_id)
-    return 'START'
+
+def create_message(product_details):
+    msg = (
+        f'''\
+        {product_details['name']}
+        {product_details['description']}
+        {product_details['price']} за 1 кг
+        {product_details['weight']} кг в 1 шт.
+        ''')
+    return textwrap.dedent(msg)
+
 
 
 def echo(update, context):
@@ -49,18 +76,7 @@ def echo(update, context):
 
 
 def handle_users_reply(update, context):
-    """
-    Функция, которая запускается при любом сообщении от пользователя и решает как его обработать.
-    Эта функция запускается в ответ на эти действия пользователя:
-        * Нажатие на inline-кнопку в боте
-        * Отправка сообщения боту
-        * Отправка команды боту
-    Она получает стейт пользователя из базы данных и запускает соответствующую функцию-обработчик (хэндлер).
-    Функция-обработчик возвращает следующее состояние, которое записывается в базу данных.
-    Если пользователь только начал пользоваться ботом, Telegram форсит его написать "/start",
-    поэтому по этой фразе выставляется стартовое состояние.
-    Если пользователь захочет начать общение с ботом заново, он также может воспользоваться этой командой.
-    """
+    
     db = get_database_connection()
     if update.message:
         user_reply = update.message.text
@@ -115,6 +131,7 @@ if __name__ == '__main__':
     updater = Updater(token)
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CallbackQueryHandler(handle_users_reply))
+    dispatcher.add_handler(CallbackQueryHandler(handle_menu))
     dispatcher.add_handler(MessageHandler(Filters.text, handle_users_reply))
     dispatcher.add_handler(CommandHandler('start', handle_users_reply))
     updater.start_polling()
