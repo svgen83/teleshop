@@ -28,8 +28,9 @@ def start(update, context):
                   callback_data=product['id'])]
         keyboard.append(button)
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text('Привет!Мы продаём рыбов, а не только показываем!',
-    reply_markup=reply_markup)
+    context.bot.send_message(text='Привет!Мы продаём рыбов. Смотрите. Красивое',
+                             chat_id=update.effective_user.id,
+                             reply_markup=reply_markup)
     return 'HANDLE_MENU'
     
     
@@ -37,7 +38,10 @@ def handle_menu(update, context):
     query = update.callback_query
     query.answer()
     query.message.delete()
-    #pprint(query.data)
+    keyboard = []
+    button = [InlineKeyboardButton('Назад', callback_data='Назад')]
+    keyboard.append(button)
+    reply_markup = InlineKeyboardMarkup(keyboard)
     access_token = get_access_token()
     product_details = get_product_details(access_token, query.data)
     message = create_message(product_details)
@@ -45,10 +49,20 @@ def handle_menu(update, context):
     logger.info(message)
     #query.edit_message_text(text=message)
     context.bot.send_photo(chat_id=query.message.chat_id, photo=img_lnk,
-                           caption=message)
+                           caption=message, reply_markup=reply_markup)
                             #chat_id=query.message.chat_id,
                            # message_id=query.message.message_id)
-    return 'HANDLE_MENU'
+    return 'HANDLE_DESCRIPTION'
+    
+    
+def handle_description(update, context):
+    query = update.callback_query
+    query.answer()
+    if query.data == 'Назад':
+        start(update, context)
+        query.message.delete()
+        #context.bot.send_message(text='Введите /start', chat_id=query.message.chat_id)
+        return 'HANDLE_MENU'
 
 
 def create_message(product_details):
@@ -60,19 +74,6 @@ def create_message(product_details):
         {product_details['weight']} кг в 1 шт.
         ''')
     return textwrap.dedent(msg)
-
-
-
-def echo(update, context):
-    """
-    Хэндлер для состояния ECHO.
-    
-    Бот отвечает пользователю тем же, что пользователь ему написал.
-    Оставляет пользователя в состоянии ECHO.
-    """
-    users_reply = update.message.text
-    update.message.reply_text(users_reply)
-    return "ECHO"
 
 
 def handle_users_reply(update, context):
@@ -93,8 +94,8 @@ def handle_users_reply(update, context):
     
     states_functions = {
         'START': start,
-        'ECHO': echo,
-        'HANDLE_MENU': handle_menu
+        'HANDLE_MENU': handle_menu,
+        'HANDLE_DESCRIPTION': handle_description
     }
     state_handler = states_functions[user_state]
     # Если вы вдруг не заметите, что python-telegram-bot перехватывает ошибки.
@@ -123,7 +124,7 @@ def get_database_connection():
 if __name__ == '__main__':
 
     load_dotenv()
-    token = os.getenv("TG_TOKEN")
+    token = os.getenv('TG_TOKEN')
     logging.basicConfig(
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         level=logging.INFO)
