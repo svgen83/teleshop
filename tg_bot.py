@@ -11,7 +11,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Filters, Updater
 from telegram.ext import CallbackQueryHandler, CommandHandler, MessageHandler
 from teleshop import get_access_token, get_products, get_product_details
-from teleshop import get_img_link
+from teleshop import get_img_link, create_cart, add_to_cart, get_cart
 
 
 _database = None
@@ -25,8 +25,10 @@ def start(update, context):
     keyboard = []
     for product in products:
         button = [InlineKeyboardButton(product['name'],
-                  callback_data=product['id'])]
+                                       callback_data=product['id'])]
         keyboard.append(button)
+    keyboard.append([InlineKeyboardButton('Корзина',
+                                          callback_data='Корзина')])
     reply_markup = InlineKeyboardMarkup(keyboard)
     context.bot.send_message(text='Привет!Мы продаём рыбов. Смотрите. Красивое',
                              chat_id=update.effective_user.id,
@@ -39,8 +41,13 @@ def handle_menu(update, context):
     query.answer()
     query.message.delete()
     keyboard = []
-    button = [InlineKeyboardButton('Назад', callback_data='Назад')]
-    keyboard.append(button)
+    button_names = ['1','5', '10', 'Корзина', 'Назад']
+    for button_name in button_names:
+        button = [InlineKeyboardButton(
+                                       button_name,
+                                       callback_data= f'{button_name},{query.data}'
+                                       )]
+        keyboard.append(button)
     reply_markup = InlineKeyboardMarkup(keyboard)
     access_token = get_access_token()
     product_details = get_product_details(access_token, query.data)
@@ -56,13 +63,26 @@ def handle_menu(update, context):
     
     
 def handle_description(update, context):
+    access_token = get_access_token()
     query = update.callback_query
     query.answer()
-    if query.data == 'Назад':
+    chat_id = query.message.chat_id
+    if query.data.split(',')[0] == 'Назад':
         start(update, context)
         query.message.delete()
-        #context.bot.send_message(text='Введите /start', chat_id=query.message.chat_id)
         return 'HANDLE_MENU'
+    elif query.data.split(',')[0] == 'Корзина':
+         query.message.delete()
+         pprint(get_cart(access_token, chat_id))
+    
+    else:
+        quantity = int(query.data.split(',')[0])
+        product_id = query.data.split(',')[1]
+        print(product_id)
+        add_to_cart(access_token, str(chat_id), product_id, quantity)
+        context.bot.send_message(text='добавлено в корзину',
+                                 chat_id=chat_id)
+        return 'HANDLE_DESCRIPTION'
 
 
 def create_message(product_details):
