@@ -11,7 +11,8 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Filters, Updater
 from telegram.ext import CallbackQueryHandler, CommandHandler, MessageHandler
 from teleshop import get_access_token, get_products, get_product_details
-from teleshop import get_img_link, create_cart, add_to_cart, get_cart
+from teleshop import get_img_link, create_cart, add_to_cart, get_cart_items
+from teleshop import choose_cart_items_details, delete_from_cart
 
 
 _database = None
@@ -73,8 +74,21 @@ def handle_description(update, context):
         return 'HANDLE_MENU'
     elif query.data.split(',')[0] == 'Корзина':
          query.message.delete()
-         pprint(get_cart(access_token, chat_id))
-    
+         cart_details = choose_cart_item_details
+         keyboard = [[InlineKeyboardButton('Оплатить', callback_data='Оплатить')],
+                     [InlineKeyboardButton('В меню', callback_data='В меню')]]
+         reply_markup = InlineKeyboardMarkup(keyboard)
+         cart_items = get_cart_items(access_token, str(chat_id))
+         msgs = create_msgs_for_cart(cart_items)
+         for msg in msgs:
+            context.bot.send_message(text=msg,
+                                     chat_id=chat_id,
+                                     reply_markup=reply_markup)
+         return 'HANDLE_DESCRIPTION'
+    elif query.data == 'Оплатить': 
+        context.bot.send_message(text='В разработке',
+                                     chat_id=chat_id)
+        return 'HANDLE_DESCRIPTION'
     else:
         quantity = int(query.data.split(',')[0])
         product_id = query.data.split(',')[1]
@@ -83,6 +97,23 @@ def handle_description(update, context):
         context.bot.send_message(text='добавлено в корзину',
                                  chat_id=chat_id)
         return 'HANDLE_DESCRIPTION'
+        
+        
+def create_msgs_for_cart(cart_items):
+    msgs = []
+    for cart_item in cart_items:
+        name = cart_item['name']
+        quantity = cart_item['quantity']
+        value_amount = cart_item['value']['amount']
+        value_currency = cart_item['value']['currency']
+        msg = textwrap.dedent(f"""
+                                 {name}
+                                 {quantity}
+                                 {value_amount} {value_currency}
+                               """)
+        msgs.append(msg)
+    return msgs
+        
 
 
 def create_message(product_details):
