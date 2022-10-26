@@ -187,20 +187,19 @@ def choose_cart_items_details(cart_items):
     return details
 
 
-def create_msgs_for_cart(cart_items):
+def create_msgs_for_cart(cart_items_details):
     msgs = []
-    for cart_item in cart_items:
-        name = cart_item['name']
-        quantity = cart_item['quantity']
-        value_amount = cart_item['value']['amount']
-        value_currency = cart_item['value']['currency']
+    for cart_items_detail in cart_items_details:
+        name = cart_items_detail['name']
+        quantity = cart_items_detail['quantity']
+        value_amount = cart_items_detail['value_amount']
+        value_currency = cart_items_detail['value_currency']
         msg = f"""
-              {name}
-              {quantity}
-              {value_amount} {value_currency}
+              Вы покупате {name}
+              {quantity} кг
+              Стоимость {value_amount} {value_currency}
               """
         msgs.append(msg)
-    pprint(msgs)
     return msgs
     
 
@@ -231,8 +230,9 @@ if __name__ == "__main__":
     #pprint(get_cart(access_token, "svg_2"))
     add_to_cart(access_token, "svg_2", p_id, 2)
     cart_items=get_cart_items(access_token, "svg_2")
-    cart_items_details = get_cart_items_details(cart_items)
+    cart_items_details = choose_cart_items_details(cart_items)
     pprint(cart_items_details)
+    pprint(create_msgs_for_cart(cart_items_details))
     #delete_from_cart(access_token, "svg_2", p_id)
     
     

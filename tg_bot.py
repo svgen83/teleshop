@@ -74,12 +74,21 @@ def handle_description(update, context):
         return 'HANDLE_MENU'
     elif query.data.split(',')[0] == 'Корзина':
          query.message.delete()
-         cart_details = choose_cart_item_details
          keyboard = [[InlineKeyboardButton('Оплатить', callback_data='Оплатить')],
                      [InlineKeyboardButton('В меню', callback_data='В меню')]]
-         reply_markup = InlineKeyboardMarkup(keyboard)
+      
          cart_items = get_cart_items(access_token, str(chat_id))
-         msgs = create_msgs_for_cart(cart_items)
+         cart_details = choose_cart_items_details(cart_items)
+         print(cart_details)
+         for cart_detail in cart_details:
+            button = [InlineKeyboardButton(
+                                       f'''Удалить {cart_detail['name']}''',
+                                       callback_data= f'''{cart_detail['name']},
+                                                       {cart_detail['product_id']}'''
+                                       )]
+            keyboard.append(button)   
+         msgs = create_msgs_for_cart(cart_details)
+         reply_markup = InlineKeyboardMarkup(keyboard)
          for msg in msgs:
             context.bot.send_message(text=msg,
                                      chat_id=chat_id,
@@ -99,17 +108,17 @@ def handle_description(update, context):
         return 'HANDLE_DESCRIPTION'
         
         
-def create_msgs_for_cart(cart_items):
+def create_msgs_for_cart(cart_items_details):
     msgs = []
-    for cart_item in cart_items:
-        name = cart_item['name']
-        quantity = cart_item['quantity']
-        value_amount = cart_item['value']['amount']
-        value_currency = cart_item['value']['currency']
+    for cart_items_detail in cart_items_details:
+        name = cart_items_detail['name']
+        quantity = cart_items_detail['quantity']
+        value_amount = cart_items_detail['value_amount']
+        value_currency = cart_items_detail['value_currency']
         msg = textwrap.dedent(f"""
-                                 {name}
-                                 {quantity}
-                                 {value_amount} {value_currency}
+                               Вы покупате {name}
+                               {quantity} кг
+                               Стоимость {value_amount} {value_currency}
                                """)
         msgs.append(msg)
     return msgs
