@@ -77,7 +77,7 @@ def create_product(access_token):
                              headers=headers,
                              json=params)
     response.raise_for_status()
-    print(response.json())
+    return response.json()
 
 
                                 
@@ -110,7 +110,7 @@ def get_inventory(access_token):
     headers = {'Authorization': access_token}
     response = requests.get(url, headers=headers)
     response.raise_for_status()
-    pprint(response.json())
+    return response.json()
     
     
 def get_product_details(access_token, product_id):
@@ -204,7 +204,7 @@ def create_msgs_for_cart(cart_items_details):
     
 
 def delete_from_cart(access_token, client_name, product_id):
-    url = f'https://api.moltin.com/v2/carts/{client_name}/items/{product_id}'
+    url = f'https://api.moltin.com/v2/carts/{client_name}/items/product_id'
     headers = {'Authorization': access_token}
     response = requests.delete(url, headers=headers)
     response.raise_for_status()
@@ -219,22 +219,8 @@ if __name__ == "__main__":
     
     #p_id = "47eb211d-89f2-4217-80d1-f66bf9314b56"
     p_id = '2d783b46-a428-4fdd-ab30-88b5c415d847'
-    #p_id = "52c56b6e-243a-47a7-ae47-ee652791953e"
-####    pprint(create_customer(access_token, "svg_2", "s@g.ru", "1111"))
-  #  goods = get_product_details(access_token, p_id)
-    #pprint(goods)
-    pprint(get_products(access_token))
-    #customer_token = get_customer_token(access_token, "s@g.ru", "1111")
-    #print(customer_token)
-    #pprint(create_cart(access_token, "svg_2"))
-    #pprint(get_cart(access_token, "svg_2"))
-    add_to_cart(access_token, "svg_2", p_id, 2)
-    cart_items=get_cart_items(access_token, "svg_2")
-    cart_items_details = choose_cart_items_details(cart_items)
-    pprint(cart_items_details)
-    pprint(create_msgs_for_cart(cart_items_details))
-    #delete_from_cart(access_token, "svg_2", p_id)
     
+    pprint(get_products(access_token))
     
     
     

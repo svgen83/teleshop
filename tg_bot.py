@@ -42,7 +42,7 @@ def handle_menu(update, context):
   query.answer()
   query.message.delete()
   keyboard = []
-  button_names = ['1', '5', '10', 'Корзина', 'Назад']
+  button_names = ['1', '5', '10', 'Корзина', 'В меню']
   for button_name in button_names:
     button = [
       InlineKeyboardButton(button_name,
@@ -50,17 +50,18 @@ def handle_menu(update, context):
     ]
     keyboard.append(button)
   reply_markup = InlineKeyboardMarkup(keyboard)
+  if query.data == 'Корзина':
+    handle_cart(update, context)
+    query.message.delete()
+    return 'HANDLE_CART'
   product_details = get_product_details(access_token, query.data)
   message = create_message(product_details)
   img_lnk = get_img_link(access_token, product_details['img_id'])
-  logger.info(message)
-  #query.edit_message_text(text=message)
   context.bot.send_photo(chat_id=query.message.chat_id,
                          photo=img_lnk,
                          caption=message,
                          reply_markup=reply_markup)
-  #chat_id=query.message.chat_id,
-  # message_id=query.message.message_id)
+  logger.info(message)
   return 'HANDLE_DESCRIPTION'
 
 
@@ -69,7 +70,7 @@ def handle_description(update, context):
   query = update.callback_query
   query.answer()
   chat_id = query.message.chat_id
-  if query.data.split(',')[0] == 'Назад':
+  if query.data.split(',')[0] == 'В меню':
     start(update, context)
     query.message.delete()
     return 'HANDLE_MENU'
@@ -77,20 +78,9 @@ def handle_description(update, context):
     handle_cart(update, context)
     query.message.delete()
     return 'HANDLE_CART'
-  elif query.data == 'Оплатить':
-    context.bot.send_message(text='В разработке', chat_id=chat_id)
-    return 'HANDLE_DESCRIPTION'
-  elif query.data.split(',')[0] == 'В меню':
-    start(update, context)
-    query.message.delete()
-    return 'HANDLE_MENU'
-  elif "Удалить" in query.data.split(',')[0]:
-    delete_from_cart(access_token, chat_id, query.data.split(',')[1])
-    context.bot.send_message(text='удалено из корзины', chat_id=chat_id)
-    return 'HANDLE_DESCRIPTION'
   else:
     quantity = int(query.data.split(',')[0])
-    product_id = query.data.split(',')[1]
+    product_id = query.data.split(',')[-1]
     print(product_id)
     add_to_cart(access_token, str(chat_id), product_id, quantity)
     context.bot.send_message(text='добавлено в корзину', chat_id=chat_id)
@@ -102,25 +92,37 @@ def handle_cart(update, context):
   query = update.callback_query
   query.answer()
   chat_id = query.message.chat_id
-  keyboard = [[InlineKeyboardButton('Оплатить', callback_data='Оплатить')],
+  if "Оплатить" in query.data:
+    context.bot.send_message(text='В разработке', chat_id=chat_id)
+    return 'HANDLE_MENU'
+  elif "В меню" in query.data.split(','):
+    start(update, context)
+    query.message.delete()
+    return 'HANDLE_MENU'
+  elif "Удалить" in query.data.split(','):
+    print(query.data)
+    delete_from_cart(access_token, str(chat_id), query.data.split(',')[-1])
+    context.bot.send_message(text='удалено из корзины', chat_id=chat_id)
+    return 'HANDLE_DESCRIPTION'
+  else:
+    keyboard = [[InlineKeyboardButton('Оплатить', callback_data='Оплатить')],
               [InlineKeyboardButton('В меню', callback_data='В меню')]]
-  cart_items = get_cart_items(access_token, str(chat_id))
-  cart_details = choose_cart_items_details(cart_items)
-  for cart_detail in cart_details:
-    button = [
-      InlineKeyboardButton(
-        f'''Удалить {cart_detail['name']}''',
-        callback_data=f'''Удалить,{cart_detail['product_id']}'''
+    cart_items = get_cart_items(access_token, str(chat_id))
+    cart_details = choose_cart_items_details(cart_items)
+    for cart_detail in cart_details:
+        button = [InlineKeyboardButton(
+                 f'''Удалить {cart_detail['name']}''',
+                 callback_data=f'''Удалить,{cart_detail['product_id']}'''
       )
     ]
-    keyboard.append(button)
-  msgs = create_msgs_for_cart(cart_details)
-  reply_markup = InlineKeyboardMarkup(keyboard)
-  for msg in msgs:
-    context.bot.send_message(text=msg,
+        keyboard.append(button)
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    msgs = create_msgs_for_cart(cart_details)
+    for msg in msgs:
+        context.bot.send_message(text=msg,
                              chat_id=chat_id,
                              reply_markup=reply_markup)
-  return 'HANDLE_DESCRIPTION'
+    return 'HANDLE_CART'
 
 
 def create_msgs_for_cart(cart_items_details):
@@ -169,8 +171,8 @@ def handle_users_reply(update, context):
     'START': start,
     'HANDLE_MENU': handle_menu,
     'HANDLE_DESCRIPTION': handle_description,
-    'HANDLE_CART': handle_cart
-  }
+    'HANDLE_CART': handle_cart,
+    'WAITING_EMAIL': waiting_email}
   state_handler = states_functions[user_state]
   # Если вы вдруг не заметите, что python-telegram-bot перехватывает ошибки.
   # Оставляю этот try...except, чтобы код не падал молча.
