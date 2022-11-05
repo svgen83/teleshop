@@ -93,8 +93,8 @@ def handle_cart(update, context):
   query.answer()
   chat_id = query.message.chat_id
   if "Оплатить" in query.data:
-    context.bot.send_message(text='В разработке', chat_id=chat_id)
-    return 'HANDLE_MENU'
+    context.bot.send_message(text='Сообщите свою электронную почту', chat_id=chat_id)
+    return 'WAITING_EMAIL'
   elif "В меню" in query.data.split(','):
     start(update, context)
     query.message.delete()
@@ -124,6 +124,15 @@ def handle_cart(update, context):
                              reply_markup=reply_markup)
     return 'HANDLE_CART'
 
+
+def waiting_email(update, context):
+    msg = update.message
+    e_mail = msg.text
+    chat_id = msg.chat.id
+    context.bot.send_message(text=e_mail,
+                             chat_id=chat_id)
+    return 'START'
+                        
 
 def create_msgs_for_cart(cart_items_details):
   msgs = []
@@ -173,6 +182,7 @@ def handle_users_reply(update, context):
     'HANDLE_DESCRIPTION': handle_description,
     'HANDLE_CART': handle_cart,
     'WAITING_EMAIL': waiting_email}
+    
   state_handler = states_functions[user_state]
   # Если вы вдруг не заметите, что python-telegram-bot перехватывает ошибки.
   # Оставляю этот try...except, чтобы код не падал молча.
