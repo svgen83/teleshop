@@ -109,7 +109,6 @@ def watch_cart(update,context):
         context.bot.send_message(text=msg,
                              chat_id=chat_id,
                              reply_markup=reply_markup)
-  return 'HANDLE_CART'
 
 
 def handle_cart(update, context):
