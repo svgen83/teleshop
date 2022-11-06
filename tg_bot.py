@@ -12,7 +12,7 @@ from telegram.ext import Filters, Updater
 from telegram.ext import CallbackQueryHandler, CommandHandler, MessageHandler
 from teleshop import get_access_token, get_products, get_product_details
 from teleshop import get_img_link, create_cart, add_to_cart, get_cart_items
-from teleshop import choose_cart_items_details, delete_from_cart
+from teleshop import choose_cart_items_details, delete_from_cart, create_customer
 
 _database = None
 
@@ -51,7 +51,7 @@ def handle_menu(update, context):
     keyboard.append(button)
   reply_markup = InlineKeyboardMarkup(keyboard)
   if query.data == 'Корзина':
-    handle_cart(update, context)
+    watch_cart(update, context)
     query.message.delete()
     return 'HANDLE_CART'
   product_details = get_product_details(access_token, query.data)
@@ -75,7 +75,7 @@ def handle_description(update, context):
     query.message.delete()
     return 'HANDLE_MENU'
   elif query.data.split(',')[0] == 'Корзина':
-    handle_cart(update, context)
+    watch_cart(update, context)
     query.message.delete()
     return 'HANDLE_CART'
   else:
@@ -87,49 +87,59 @@ def handle_description(update, context):
     return 'HANDLE_DESCRIPTION'
 
 
+def watch_cart(update,context):
+  access_token = get_access_token()
+  query = update.callback_query
+  query.answer()
+  chat_id = query.message.chat_id
+  keyboard = [[InlineKeyboardButton('Оплатить', callback_data='Оплатить')],
+              [InlineKeyboardButton('В меню', callback_data='В меню')]]
+  cart_items = get_cart_items(access_token, str(chat_id))
+  cart_details = choose_cart_items_details(cart_items)
+  for cart_detail in cart_details:
+      button = [InlineKeyboardButton(
+                 f'''Удалить {cart_detail['name']}''',
+                 callback_data=f'''Удалить,{cart_detail['product_id']}'''
+      )
+    ]
+      keyboard.append(button)
+  reply_markup = InlineKeyboardMarkup(keyboard)
+  msgs = create_msgs_for_cart(cart_details)
+  for msg in msgs:
+        context.bot.send_message(text=msg,
+                             chat_id=chat_id,
+                             reply_markup=reply_markup)
+  return 'HANDLE_CART'
+
+
 def handle_cart(update, context):
   access_token = get_access_token()
   query = update.callback_query
   query.answer()
   chat_id = query.message.chat_id
-  if "Оплатить" in query.data:
+  print(query.data)
+  if query.data == 'Оплатить':
+    query.message.delete()
     context.bot.send_message(text='Сообщите свою электронную почту', chat_id=chat_id)
     return 'WAITING_EMAIL'
-  elif "В меню" in query.data.split(','):
+  elif query.data == 'В меню':
     start(update, context)
     query.message.delete()
     return 'HANDLE_MENU'
-  elif "Удалить" in query.data.split(','):
-    print(query.data)
-    delete_from_cart(access_token, str(chat_id), query.data.split(',')[-1])
+  elif query.data.split(',')[0] == 'Удалить':
+    delete_from_cart(access_token, str(chat_id), query.data.split(',')[1])
     context.bot.send_message(text='удалено из корзины', chat_id=chat_id)
-    return 'HANDLE_DESCRIPTION'
-  else:
-    keyboard = [[InlineKeyboardButton('Оплатить', callback_data='Оплатить')],
-              [InlineKeyboardButton('В меню', callback_data='В меню')]]
-    cart_items = get_cart_items(access_token, str(chat_id))
-    cart_details = choose_cart_items_details(cart_items)
-    for cart_detail in cart_details:
-        button = [InlineKeyboardButton(
-                 f'''Удалить {cart_detail['name']}''',
-                 callback_data=f'''Удалить,{cart_detail['product_id']}'''
-      )
-    ]
-        keyboard.append(button)
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    msgs = create_msgs_for_cart(cart_details)
-    for msg in msgs:
-        context.bot.send_message(text=msg,
-                             chat_id=chat_id,
-                             reply_markup=reply_markup)
+    query.message.delete()
     return 'HANDLE_CART'
 
 
 def waiting_email(update, context):
+    access_token = get_access_token()
     msg = update.message
     e_mail = msg.text
     chat_id = msg.chat.id
-    context.bot.send_message(text=e_mail,
+    create_customer(access_token, chat_id, e_mail)
+    context.bot.send_message(text="Вы успешно зарегестрированы. свяжемся с вами по e-mail",
                              chat_id=chat_id)
     return 'START'
                         

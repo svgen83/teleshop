@@ -16,16 +16,18 @@ def get_access_token():
     return f'Bearer {response.json()["access_token"]}'
     
 
-def create_customer(access_token, name, email, password):
+def create_customer(access_token, name, email):
+    url = 'https://api.moltin.com/v2/customers'
     headers = {'Authorization': access_token,
                'Content-Type': 'application/json'}
     json_data = {
         'data': {
             'type': 'customer',
             'name': name,
-            'email': email,
-            'password': password}}
-    response = requests.post('https://api.moltin.com/v2/customers', headers=headers, json=json_data)
+            'email': email
+            #'password': ''
+            }}
+    response = requests.post(url, headers=headers, json=json_data)
     response.raise_for_status()
     return response.json()
 
@@ -204,7 +206,7 @@ def create_msgs_for_cart(cart_items_details):
     
 
 def delete_from_cart(access_token, client_name, product_id):
-    url = f'https://api.moltin.com/v2/carts/{client_name}/items/product_id'
+    url = f'https://api.moltin.com/v2/carts/{client_name}/items/{product_id}'
     headers = {'Authorization': access_token}
     response = requests.delete(url, headers=headers)
     response.raise_for_status()
