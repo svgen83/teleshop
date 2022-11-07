@@ -24,12 +24,22 @@ def create_customer(access_token, name, email):
         'data': {
             'type': 'customer',
             'name': name,
-            'email': email
-            #'password': ''
+            'email': email,
+            'password': 'password'
             }}
     response = requests.post(url, headers=headers, json=json_data)
     response.raise_for_status()
-    return response.json()
+    pprint(response.json())
+
+
+def get_customers(access_token):
+    url = 'https://api.moltin.com/v2/customers/'
+    headers = {'Authorization': access_token}
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    pprint(response.json())
+
+  
 
 def get_customer_token(access_token, _email, _password):
    headers = {'Authorization': access_token,
@@ -205,24 +215,51 @@ def create_msgs_for_cart(cart_items_details):
     return msgs
     
 
-def delete_from_cart(access_token, client_name, product_id):
-    url = f'https://api.moltin.com/v2/carts/{client_name}/items/{product_id}'
+def delete_from_cart(access_token, client_name):
+    url = f'https://api.moltin.com/v2/carts/{client_name}/items/'
     headers = {'Authorization': access_token}
     response = requests.delete(url, headers=headers)
     response.raise_for_status()
-    return response.json()
-    
-    
+
+
+def load_main_image(access_token, product_id, image_id):
+  url = f'https://api.moltin.com/v2/products/{product_id}/relationships/main-image'
+  headers = {
+      'Authorization': access_token,
+      'Content-Type': 'application/json'
+          }
+  json_data = {
+    'data': {
+        'type': 'main_image',
+        'id': image_id
+    }}
+  response = requests.post(url, headers=headers, json=json_data)
+  response.raise_for_status()
+
+
+def load(access_token, file_name):
+  files = {'file_location': (None,file_name)}
+  url = 'https://api.moltin.com/v2/files'
+  headers = {
+      'Authorization': access_token
+      #'Content-Type': 'multipart/form-data'
+          }
+  response = requests.post(url, headers=headers, files=files)
+  # response.raise_for_status()
+  pprint(response.json())
+
+
 
 if __name__ == "__main__":
-    load_dotenv()
+  load_dotenv()
 
-    access_token = get_access_token()
-    
-    #p_id = "47eb211d-89f2-4217-80d1-f66bf9314b56"
-    p_id = '2d783b46-a428-4fdd-ab30-88b5c415d847'
-    
-    pprint(get_products(access_token))
+  access_token = get_access_token()
+  products = get_products(access_token)
+  pprint(products)
+
+  
+
+
     
     
     
