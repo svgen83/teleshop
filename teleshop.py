@@ -29,7 +29,7 @@ def create_customer(access_token, name, email):
             }}
     response = requests.post(url, headers=headers, json=json_data)
     response.raise_for_status()
-    pprint(response.json())
+    return response.json()
 
 
 def get_customers(access_token):
@@ -37,9 +37,8 @@ def get_customers(access_token):
     headers = {'Authorization': access_token}
     response = requests.get(url, headers=headers)
     response.raise_for_status()
-    pprint(response.json())
-
-  
+    return response.json()['data']
+    
 
 def get_customer_token(access_token, _email, _password):
    headers = {'Authorization': access_token,
@@ -254,8 +253,8 @@ if __name__ == "__main__":
   load_dotenv()
 
   access_token = get_access_token()
-  products = get_products(access_token)
-  pprint(products)
+  get_customers(access_token)
+
 
   
 
