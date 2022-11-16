@@ -29,7 +29,7 @@ def create_customer(access_token, name, email):
             }}
     response = requests.post(url, headers=headers, json=json_data)
     response.raise_for_status()
-    return response.json()
+    response.json()
 
 
 def get_customers(access_token):
@@ -38,7 +38,7 @@ def get_customers(access_token):
     response = requests.get(url, headers=headers)
     response.raise_for_status()
     return response.json()['data']
-    
+  
 
 def get_customer_token(access_token, _email, _password):
    headers = {'Authorization': access_token,
@@ -164,8 +164,7 @@ def add_to_cart(access_token, client_name, product_id, quantity):
           }
         }
     response = requests.post(url,headers=headers, json=data)
-    response.raise_for_status()
-    pprint(response.json())     
+    response.raise_for_status()    
     return response.json()
 
 
@@ -174,7 +173,7 @@ def get_cart(access_token, client_name):
     headers = {'Authorization': access_token}
     response = requests.get(url, headers=headers)
     response.raise_for_status()
-    return response.json()
+    return response.json()['data']['meta']['display_price']['with_tax']['formatted']
     
 
 def get_cart_items(access_token, client_name):
@@ -182,6 +181,7 @@ def get_cart_items(access_token, client_name):
     headers = {'Authorization': access_token}
     response = requests.get(url, headers=headers)
     response.raise_for_status()
+    #pprint(response.json()['data'])
     return response.json()['data']  
 
 
@@ -191,7 +191,8 @@ def choose_cart_items_details(cart_items):
         detail = {'name': cart_item['name'],
                   'product_id':cart_item['product_id'],
                   'quantity': cart_item['quantity'],
-                  'value_amount': cart_item['value']['amount'],
+                  'value_amount': cart_item['meta']['display_price']['with_tax']['value']['formatted'],
+                  #['value']['amount'],
                   'value_currency': cart_item['value']['currency']
         }
         details.append(detail)  
@@ -236,7 +237,7 @@ def load_main_image(access_token, product_id, image_id):
   response.raise_for_status()
 
 
-def load(access_token, file_name):
+def load_image(access_token, file_name):
   files = {'file_location': (None,file_name)}
   url = 'https://api.moltin.com/v2/files'
   headers = {
@@ -244,7 +245,7 @@ def load(access_token, file_name):
       #'Content-Type': 'multipart/form-data'
           }
   response = requests.post(url, headers=headers, files=files)
-  # response.raise_for_status()
+  response.raise_for_status()
   pprint(response.json())
 
 
@@ -253,15 +254,7 @@ if __name__ == "__main__":
   load_dotenv()
 
   access_token = get_access_token()
-  get_customers(access_token)
+  products = get_products(access_token)
+  pprint(products)
 
-
-  
-
-
-    
-    
-    
-    
-    
-       
+ 

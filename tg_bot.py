@@ -11,7 +11,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Filters, Updater
 from telegram.ext import CallbackQueryHandler, CommandHandler, MessageHandler
 from teleshop import get_access_token, get_products, get_product_details
-from teleshop import get_img_link, create_cart, add_to_cart, get_cart_items
+from teleshop import get_img_link, create_cart, add_to_cart, get_cart, get_cart_items
 from teleshop import choose_cart_items_details, delete_from_cart, create_customer, get_customers
 
 _database = None
@@ -90,9 +90,10 @@ def watch_cart(update,context):
     access_token = get_access_token()
     query = update.callback_query
     query.answer()
-    chat_id = chat_id=update.effective_user.id
+    chat_id = update.effective_user.id
     keyboard = [[InlineKeyboardButton('Оплатить', callback_data='Оплатить')],
               [InlineKeyboardButton('В меню', callback_data='В меню')]]
+    print(get_cart(access_token, str(chat_id)))
     cart_items = get_cart_items(access_token, str(chat_id))
     cart_details = choose_cart_items_details(cart_items)
     for cart_detail in cart_details:
@@ -115,8 +116,9 @@ def handle_cart(update, context):
     chat_id = query.message.chat_id
     if query.data == 'Оплатить':
         query.message.delete()
-        context.bot.send_message(text='Сообщите свою электронную почту',
-                                 chat_id=chat_id)
+        message = "Пришлите свою электронную почту"      
+        context.bot.send_message(text=message,
+                             chat_id=chat_id)
         return 'WAITING_EMAIL'
     elif query.data == 'В меню':
         start(update, context)
@@ -134,16 +136,20 @@ def waiting_email(update, context):
     e_mail = msg.text
     chat_id = msg.chat.id
     access_token = get_access_token()
-    customers = get_customers(access_token)
-    for customer in customers:
-        if customer[str(chat_id)]:
-            message = "Пользователь с таким именем уже зарегистирован"
-        else:
-            create_customer(access_token, str(chat_id), e_mail)
-            message = "Вы успешно зарегистрированы. свяжемся с вами по e-mail"
-    context.bot.send_message(text=message,
+    #customers = get_customers(access_token)
+    #for customer in customers:
+     #   if customer[str(chat_id)]:
+      #      message = "Пользователь с таким именем уже зарегистирован"
+       # else:   
+    try:
+      create_customer(access_token, str(chat_id), e_mail)
+      message = "Вы успешно зарегистрированы. свяжемся с вами по e-mail"
+    except:
+      message = "Вы ранее регистрировались"    
+    finally:
+      context.bot.send_message(text=message,
                              chat_id=chat_id)
-    return 'START'
+      return 'HANDLE_DESCRIPTION'
     
                       
 
