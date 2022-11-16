@@ -1,3 +1,6 @@
+
+
+ 
 import json
 import os
 import requests
@@ -168,7 +171,7 @@ def add_to_cart(access_token, client_name, product_id, quantity):
     return response.json()
 
 
-def get_cart(access_token, client_name):
+def get_price(access_token, client_name):
     url = f'https://api.moltin.com/v2/carts/{client_name}'
     headers = {'Authorization': access_token}
     response = requests.get(url, headers=headers)
@@ -199,7 +202,7 @@ def choose_cart_items_details(cart_items):
     return details
 
 
-def create_msgs_for_cart(cart_items_details):
+def create_msgs_for_cart(cart_items_details, price):
     msgs = []
     for cart_items_detail in cart_items_details:
         name = cart_items_detail['name']
@@ -212,6 +215,7 @@ def create_msgs_for_cart(cart_items_details):
               Стоимость {value_amount} {value_currency}
               """
         msgs.append(msg)
+    msgs.append(price)
     return msgs
     
 
@@ -257,4 +261,17 @@ if __name__ == "__main__":
   products = get_products(access_token)
   pprint(products)
 
- 
+  
+    #p_id = "47eb211d-89f2-4217-80d1-f66bf9314b56"
+  p_id = '2d783b46-a428-4fdd-ab30-88b5c415d847'
+  image_id = 'ba663a1e-b586-4068-b071-8bd2b6da3f23'
+  #load(access_token, 'https://krasivosti.pro/uploads/posts/2021-04/1618450972_11-krasivosti_pro-p-riba-krasnogo-tsveta-ribi-krasivo-foto-12.jpg')
+  
+  #load_main_image(access_token, p_id, image_id)
+
+    
+    
+    
+    
+    
+       
