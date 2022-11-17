@@ -1,6 +1,3 @@
-
-
- 
 import json
 import os
 import requests
@@ -51,7 +48,6 @@ def get_customer_token(access_token, _email, _password):
            'type': 'token',
            'email': _email,
            'password': _password
-           #'authentication_mechanism': 'password'
            }
        }
    response = requests.post('https://api.moltin.com/v2/customers/tokens',
@@ -106,7 +102,7 @@ def update_inventory(access_token, product_id):
     url = f'https://api.moltin.com/v2/inventories/{product_id}/transactions'
     headers = {'Authorization': access_token,
                'Content-Type': 'application/json'}
-    action = 'allocate' #'increment'
+    action = 'allocate'
     #action = 'increment'
     json_data = {
     'data': {
@@ -184,7 +180,6 @@ def get_cart_items(access_token, client_name):
     headers = {'Authorization': access_token}
     response = requests.get(url, headers=headers)
     response.raise_for_status()
-    #pprint(response.json()['data'])
     return response.json()['data']  
 
 
@@ -195,32 +190,14 @@ def choose_cart_items_details(cart_items):
                   'product_id':cart_item['product_id'],
                   'quantity': cart_item['quantity'],
                   'value_amount': cart_item['meta']['display_price']['with_tax']['value']['formatted'],
-                  #['value']['amount'],
                   'value_currency': cart_item['value']['currency']
         }
         details.append(detail)  
     return details
+  
 
-
-def create_msgs_for_cart(cart_items_details, price):
-    msgs = []
-    for cart_items_detail in cart_items_details:
-        name = cart_items_detail['name']
-        quantity = cart_items_detail['quantity']
-        value_amount = cart_items_detail['value_amount']
-        value_currency = cart_items_detail['value_currency']
-        msg = f"""
-              Вы покупате {name}
-              {quantity} кг
-              Стоимость {value_amount} {value_currency}
-              """
-        msgs.append(msg)
-    msgs.append(price)
-    return msgs
-    
-
-def delete_from_cart(access_token, client_name):
-    url = f'https://api.moltin.com/v2/carts/{client_name}/items/'
+def delete_from_cart(access_token, client_name, product_id):
+    url = f'https://api.moltin.com/v2/carts/{client_name}/items/{product_id}'
     headers = {'Authorization': access_token}
     response = requests.delete(url, headers=headers)
     response.raise_for_status()
@@ -246,32 +223,7 @@ def load_image(access_token, file_name):
   url = 'https://api.moltin.com/v2/files'
   headers = {
       'Authorization': access_token
-      #'Content-Type': 'multipart/form-data'
           }
   response = requests.post(url, headers=headers, files=files)
   response.raise_for_status()
   pprint(response.json())
-
-
-
-if __name__ == "__main__":
-  load_dotenv()
-
-  access_token = get_access_token()
-  products = get_products(access_token)
-  pprint(products)
-
-  
-    #p_id = "47eb211d-89f2-4217-80d1-f66bf9314b56"
-  p_id = '2d783b46-a428-4fdd-ab30-88b5c415d847'
-  image_id = 'ba663a1e-b586-4068-b071-8bd2b6da3f23'
-  #load(access_token, 'https://krasivosti.pro/uploads/posts/2021-04/1618450972_11-krasivosti_pro-p-riba-krasnogo-tsveta-ribi-krasivo-foto-12.jpg')
-  
-  #load_main_image(access_token, p_id, image_id)
-
-    
-    
-    
-    
-    
-       
