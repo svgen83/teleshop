@@ -43,9 +43,8 @@ python tg_bot.py
 ```
 
 
-To run the program from the server, you must first acquire a server. The following is an example of running on a virtual server [Heroku](https://heroku.com).
-The first step is to register on the Heroku website and create an app. You can submit the code from GitHub. After linking your GitHub account to Heroku, you should find the repository with the code and connect it to Heroku. Environment variables should be registered in the Config Vars section in the Settings tab. Click the "Deploy Branch" button.
-
+To run the program from the server, you must first acquire a server.The following is an example of running on a virtual server.
+How to do this is described in detail [in this manual] (https://ramziv.com/article/38).
 ### Objective of the project
 
 The code was written for educational purposes in an online course for web developers [dvmn.org](https://dvmn.org/).
