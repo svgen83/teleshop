@@ -14,7 +14,7 @@ from telegram.ext import CallbackQueryHandler, CommandHandler, MessageHandler
 from teleshop import get_access_token, get_products, get_product_details
 from teleshop import get_img_link, create_cart, add_to_cart, get_price, get_cart_items
 from teleshop import choose_cart_items_details, delete_from_cart
-from teleshop import create_customer, get_customers
+from teleshop import create_customer, validate_customer_data
 
 _database = None
 
@@ -54,7 +54,6 @@ def handle_menu(update, context):
   reply_markup = InlineKeyboardMarkup(keyboard)
   if query.data == 'Корзина':
     handle_cart(update, context)
-    #query.message.delete()
     return 'HANDLE_CART'
   product_details = get_product_details(access_token, query.data)
   message = create_message(product_details)
@@ -146,7 +145,7 @@ def waiting_email(update, context):
   reply_markup = InlineKeyboardMarkup(keyboard)
   try:
     create_customer(access_token, str(chat_id), e_mail)
-    message = "Вы успешно зарегистрированы. свяжемся с вами по e-mail"
+    message = validate_customer_data(access_token, str(chat_id))
   except requests.exceptions.HTTPError:
     message = "Вы ранее регистрировались"
   finally:

@@ -32,12 +32,17 @@ def create_customer(access_token, name, email):
     response.json()
 
 
-def get_customers(access_token):
+def validate_customer_data(access_token, client_name):
     url = 'https://api.moltin.com/v2/customers/'
     headers = {'Authorization': access_token}
     response = requests.get(url, headers=headers)
     response.raise_for_status()
-    return response.json()['data']
+    customers = response.json()['data']
+    for customer in customers:
+      if customer['name'] == client_name:
+        msg = f'''Пользователь {customer['name']} зарегистрирован
+        Адрес электронной почты для обратной связи {customer['email']}'''
+    return msg
   
 
 def get_customer_token(access_token, _email, _password):
