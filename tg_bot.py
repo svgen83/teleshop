@@ -56,7 +56,13 @@ def handle_menu(update, context):
     handle_cart(update, context)
     return 'HANDLE_CART'
   product_details = get_product_details(access_token, query.data)
-  message = create_message(product_details)
+  msg = (f'''\
+        {product_details['name']}
+        {product_details['description']}
+        {product_details['price']} за 1 кг
+        {product_details['weight']} кг в 1 шт.
+        ''')
+  message = textwrap.dedent(msg)
   img_lnk = get_img_link(access_token, product_details['img_id'])
   context.bot.send_photo(chat_id=query.message.chat_id,
                          photo=img_lnk,
@@ -169,16 +175,6 @@ def create_msg_for_cart(cart_items_details, price):
     msgs.append(msg)
   msgs.append(f'Общая стоимость {price}')
   msg = " ".join(msgs)
-  return textwrap.dedent(msg)
-
-
-def create_message(product_details):
-  msg = (f'''\
-        {product_details['name']}
-        {product_details['description']}
-        {product_details['price']} за 1 кг
-        {product_details['weight']} кг в 1 шт.
-        ''')
   return textwrap.dedent(msg)
 
 

@@ -1,6 +1,7 @@
 import json
 import os
 import requests
+from pprint import pprint
 from dotenv import load_dotenv
 
 
@@ -69,6 +70,31 @@ def create_cart(access_token, client_name):
     response.raise_for_status()
     return response.json()
 
+
+def create_product(access_token):
+    headers = {'Authorization': access_token,
+               'Content-Type': 'application/json'
+               }
+    params = {'data': {
+        'type': 'product',
+        'name': 'blue_fish',
+        'slug': 'blue_fish',
+        'sku': '3',
+        'manage_stock': True,
+        'description': 'no description',
+        'price': [{'amount': 1000,
+                   'currency': 'USD',
+                   "includes_tax": True}],
+        "status": 'live',
+        'commodity_type': 'physical'
+    }}
+    response = requests.post('https://api.moltin.com/v2/products',
+                             headers=headers,
+                             json=params)
+    response.raise_for_status()
+    return response.json()
+
+
                                 
 def get_products(access_token):
     headers = {'Authorization': access_token}
@@ -76,7 +102,32 @@ def get_products(access_token):
     response.raise_for_status()
     return response.json()['data']
   
-           
+    
+def update_inventory(access_token, product_id):
+    url = f'https://api.moltin.com/v2/inventories/{product_id}/transactions'
+    headers = {'Authorization': access_token,
+               'Content-Type': 'application/json'}
+    action = 'allocate'
+    #action = 'increment'
+    json_data = {
+    'data': {
+        'type': 'stock-transaction',
+        'action': action,
+        'quantity': 20000}}
+    
+    response = requests.post(url, headers=headers, json=json_data)
+    response.raise_for_status()
+    return response.json()
+
+   
+def get_inventory(access_token):
+    url = 'https://api.moltin.com/v2/inventories'
+    headers = {'Authorization': access_token}
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    return response.json()
+    
+    
 def get_product_details(access_token, product_id):
     url = f'https://api.moltin.com/v2/products/{product_id}'
     headers = {'Authorization': access_token}
@@ -104,7 +155,11 @@ def add_to_cart(access_token, client_name, product_id, quantity):
     url = f'https://api.moltin.com/v2/carts/{client_name}/items'
     headers = {'Authorization': access_token,
                'Content-Type': 'application/json'
+               #'X-Moltin-Customer-Token': customer_token,
+               #'EP-Channel': '',
+               #'EP-Context-Tag': ''
                }
+    
     data = {
         "data": {
           "id": product_id,
@@ -151,3 +206,29 @@ def delete_from_cart(access_token, client_name, product_id):
     headers = {'Authorization': access_token}
     response = requests.delete(url, headers=headers)
     response.raise_for_status()
+
+
+def load_main_image(access_token, product_id, image_id):
+  url = f'https://api.moltin.com/v2/products/{product_id}/relationships/main-image'
+  headers = {
+      'Authorization': access_token,
+      'Content-Type': 'application/json'
+          }
+  json_data = {
+    'data': {
+        'type': 'main_image',
+        'id': image_id
+    }}
+  response = requests.post(url, headers=headers, json=json_data)
+  response.raise_for_status()
+
+
+def load_image(access_token, file_name):
+  files = {'file_location': (None,file_name)}
+  url = 'https://api.moltin.com/v2/files'
+  headers = {
+      'Authorization': access_token
+          }
+  response = requests.post(url, headers=headers, files=files)
+  response.raise_for_status()
+  pprint(response.json())
