@@ -1,0 +1,14 @@
+[Unit]
+Description=Telegram-bot
+After=syslog.target
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/teleshop/
+ExecStart=/usr/bin/python3 /home/teleshop/tg_bot.py
+RestartSec=60
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
