@@ -45,19 +45,19 @@ def validate_customer_data(access_token, client_name):
   
 
 def get_customer_token(access_token, _email, _password):
-   headers = {'Authorization': access_token,
+    headers = {'Authorization': access_token,
               'Content-Type': 'application/json'}
-   json_data = {
-       'data': {
-           'type': 'token',
-           'email': _email,
-           'password': _password
-           }
-       }
-   response = requests.post('https://api.moltin.com/v2/customers/tokens',
+    json_data = {
+        'data': {
+            'type': 'token',
+            'email': _email,
+            'password': _password
+            }
+        }
+    response = requests.post('https://api.moltin.com/v2/customers/tokens',
                             headers=headers, json=json_data)
-   response.raise_for_status()
-   return response.json()["data"]["token"]
+    response.raise_for_status()
+    return response.json()["data"]["token"]
 
 
 def create_cart(access_token, client_name):
