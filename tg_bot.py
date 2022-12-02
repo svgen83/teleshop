@@ -117,7 +117,7 @@ def handle_cart(update, context):
 
   if query.data == 'Оплатить':
       query.message.delete()
-      message = "Пришлите свою электронную почту"
+      message = 'Пришлите свою электронную почту'
       context.bot.send_message(text=message,
                                chat_id=chat_id)
       return 'WAITING_EMAIL'
@@ -165,7 +165,7 @@ def waiting_email(update, context):
         message = validate_customer_data(access_token,
                                          str(chat_id))
     except requests.exceptions.HTTPError:
-        message = "Вы ранее регистрировались"
+        message = 'Вы ранее регистрировались'
     finally:
         context.bot.send_message(text=message,
                                 chat_id=chat_id,
@@ -179,14 +179,14 @@ def create_msg_for_cart(cart_items_details, price):
         name = cart_items_detail['name']
         quantity = cart_items_detail['quantity']
         value_amount = cart_items_detail['value_amount']
-        msg = f"""
+        msg = f'
                   Вы покупаете {name}
                   {quantity} кг
                   Стоимость {value_amount}
-                  """
+                  '
         msgs.append(msg)
     msgs.append(f'Общая стоимость {price}')
-    msg = " ".join(msgs)
+    msg = ' '.join(msgs)
     return textwrap.dedent(msg)
 
 
@@ -204,7 +204,7 @@ def handle_users_reply(update, context):
     if user_reply == '/start':
         user_state = 'START'
     else:
-        user_state = db.get(chat_id).decode("utf-8")
+        user_state = db.get(chat_id).decode('utf-8')
 
     states_functions = {
         'START': start,
@@ -224,9 +224,9 @@ def handle_users_reply(update, context):
 def get_database_connection():
     global _database
     if _database is None:
-        database_password = os.getenv("REDIS_PASSWORD")
-        database_host = os.getenv("REDIS_ENDPOINT")
-        database_port = os.getenv("REDIS_PORT")
+        database_password = os.getenv('REDIS_PASSWORD')
+        database_host = os.getenv('REDIS_ENDPOINT')
+        database_port = os.getenv('REDIS_PORT')
         _database = redis.Redis(host=database_host,
                               port=database_port,
                               password=database_password)

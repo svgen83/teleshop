@@ -5,14 +5,14 @@ from dotenv import load_dotenv
 
 
 def get_access_token():
-    url = "https://api.moltin.com/oauth/access_token"
-    params = {"client_id": os.getenv("CLIENT_ID"),
-              "client_secret": os.getenv("CLIENT_SECRET"),
-              "grant_type": "client_credentials"
+    url = 'https://api.moltin.com/oauth/access_token'
+    params = {'client_id': os.getenv('CLIENT_ID'),
+              'client_secret': os.getenv('CLIENT_SECRET'),
+              'grant_type': 'client_credentials'
               }
     response = requests.post(url,data=params)
     response.raise_for_status()
-    return f'Bearer {response.json()["access_token"]}'
+    return f'Bearer {response.json()['access_token']}'
     
 
 def create_customer(access_token, name, email):
@@ -39,8 +39,8 @@ def validate_customer_data(access_token, client_name):
     customers = response.json()['data']
     for customer in customers:
       if customer['name'] == client_name:
-        msg = f'''Пользователь {customer['name']} зарегистрирован
-        Адрес электронной почты для обратной связи {customer['email']}'''
+          msg = f'''Пользователь {customer['name']} зарегистрирован
+                    Адрес электронной почты для обратной связи {customer['email']}'''
     return msg
   
 
@@ -57,14 +57,14 @@ def get_customer_token(access_token, _email, _password):
     response = requests.post('https://api.moltin.com/v2/customers/tokens',
                             headers=headers, json=json_data)
     response.raise_for_status()
-    return response.json()["data"]["token"]
+    return response.json()['data']['token']
 
 
 def create_cart(access_token, client_name):
     response = requests.post('https://api.moltin.com/v2/carts/',
-                            headers={'Authorization': access_token,
-                            "Content-Type": 'application/json'},
-                            json = {"data":{"name":client_name}})
+                             headers={'Authorization': access_token,
+                             'Content-Type': 'application/json'},
+                             json = {'data':{'name':client_name}})
                                           
     response.raise_for_status()
     return response.json()
@@ -84,12 +84,12 @@ def get_product_details(access_token, product_id):
     response.raise_for_status()
     all_product_details = response.json()['data']
     product_details = {
-                              'name': all_product_details['name'],
-                              'description': all_product_details['description'],
-    'price': all_product_details['meta']['display_price']['with_tax']['formatted'],
-    'weight': all_product_details['weight']['kg'],
-    'img_id': all_product_details['relationships']['main_image']['data']['id']}
-    return product_details
+        'name': all_product_details['name'],
+        'description': all_product_details['description'],
+        'price': all_product_details['meta']['display_price']['with_tax']['formatted'],
+        'weight': all_product_details['weight']['kg'],
+        'img_id': all_product_details['relationships']['main_image']['data']['id']}
+        return product_details
     
     
 def get_img_link(access_token, img_id):
@@ -106,11 +106,11 @@ def add_to_cart(access_token, client_name, product_id, quantity):
                'Content-Type': 'application/json'
                }
     data = {
-        "data": {
-          "id": product_id,
-          "type": "cart_item",
-          "quantity": quantity
-          }
+        'data': {
+            'id': product_id,
+            'type': 'cart_item',
+            'quantity': quantity
+            }
         }
     response = requests.post(url,headers=headers, json=data)
     response.raise_for_status()    
@@ -141,7 +141,7 @@ def choose_cart_items_details(cart_items):
                   'quantity': cart_item['quantity'],
                   'value_amount': cart_item['meta']['display_price']['with_tax']['value']['formatted'],
                   'value_currency': cart_item['value']['currency']
-        }
+                  }
         details.append(detail)  
     return details
   
