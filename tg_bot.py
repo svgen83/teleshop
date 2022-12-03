@@ -9,10 +9,10 @@ import textwrap
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Filters, Updater
 from telegram.ext import CallbackQueryHandler, CommandHandler, MessageHandler
-from teleshop import get_access_token, get_products, get_product_details
-from teleshop import get_img_link, create_cart, add_to_cart, get_price, get_cart_items
-from teleshop import choose_cart_items_details, delete_from_cart
-from teleshop import create_customer, validate_customer_data
+from teleshop import add_to_cart, create_cart, create_customer
+from teleshop import choose_cart_items_details, get_access_token, get_cart_items 
+from teleshop import get_img_link, get_price, get_products, get_product_details
+from teleshop import delete_from_cart, validate_customer_data
 
 _database = None
 
@@ -144,7 +144,7 @@ def handle_cart(update, context):
           ]
         keyboard.append(button)
     reply_markup = InlineKeyboardMarkup(keyboard)
-    msg = create_msg_for_cart(cart_details, price)
+    msg = create_cart_msg(cart_details, price)
     context.bot.send_message(text=msg,
                              chat_id=chat_id,
                              reply_markup=reply_markup)
@@ -173,7 +173,7 @@ def waiting_email(update, context):
         return 'HANDLE_DESCRIPTION'
 
 
-def create_msg_for_cart(cart_items_details, price):
+def create_cart_msg(cart_items_details, price):
     msgs = []
     for cart_items_detail in cart_items_details:
         name = cart_items_detail['name']
