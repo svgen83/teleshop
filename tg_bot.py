@@ -136,13 +136,10 @@ def handle_cart(update, context):
 
     keyboard.append([InlineKeyboardButton('Оплатить', callback_data='Оплатить')])
     cart_details = choose_cart_items_details(cart_items)
-    for cart_detail in cart_details:
-        button = [
-          InlineKeyboardButton(
+    keyboard.append([InlineKeyboardButton(
               f'''Удалить {cart_detail['name']}''',
               callback_data=f'''Удалить,{cart_detail['product_id']}''')
-          ]
-        keyboard.append(button)
+                    ] for cart_detail in cart_details)
     reply_markup = InlineKeyboardMarkup(keyboard)
     msg = create_cart_msg(cart_details, price)
     context.bot.send_message(text=msg,
