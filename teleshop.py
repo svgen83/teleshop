@@ -118,17 +118,14 @@ def get_cart_items(access_token, client_name):
 
 
 def choose_cart_items_details(cart_items):
-    details = []
-    for cart_item in cart_items:
-        detail = {'name': cart_item['name'],
-                  'product_id':cart_item['product_id'],
-                  'quantity': cart_item['quantity'],
-                  'value_amount': cart_item['meta']['display_price']['with_tax']['value']['formatted'],
-                  'value_currency': cart_item['value']['currency']
-                  }
-        details.append(detail)  
-    return details
-  
+    return  [{'name': cart_item['name'],
+              'product_id':cart_item['product_id'],
+              'quantity': cart_item['quantity'],
+              'value_amount': cart_item['meta']['display_price']['with_tax']['value']['formatted'],
+              'value_currency': cart_item['value']['currency']
+                } for cart_item in cart_items
+             ] 
+      
 
 def delete_from_cart(access_token, client_name, product_id):
     url = f'https://api.moltin.com/v2/carts/{client_name}/items/{product_id}'

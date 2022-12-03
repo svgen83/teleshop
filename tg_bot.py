@@ -45,12 +45,11 @@ def handle_menu(update, context):
     query.message.delete()
     keyboard = []
     button_names = ['1', '5', '10', 'Корзина', 'В меню']
-    for button_name in button_names:
-        button = [
-            InlineKeyboardButton(button_name,
-                                 callback_data=f'{button_name},{query.data}')
-            ]
-        keyboard.append(button)
+    keyboard.append([ InlineKeyboardButton(
+                                     button_name,
+                                     callback_data=f'{button_name},{query.data}'
+                                     )
+                    ] for button_name in button_names)
     reply_markup = InlineKeyboardMarkup(keyboard)
     if query.data == 'Корзина':
         handle_cart(update, context)
