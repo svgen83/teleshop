@@ -109,7 +109,7 @@ def get_product_details(access_token, product_id):
         'price': all_product_details['meta']['display_price']['with_tax']['formatted'],
         'weight': all_product_details['weight']['kg'],
         'img_id': all_product_details['relationships']['main_image']['data']['id']}
-        return product_details
+   return product_details
 
 
 def delete_from_cart(access_token, client_name, product_id):
