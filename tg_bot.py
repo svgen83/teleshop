@@ -6,13 +6,15 @@ import redis
 import requests
 import textwrap
 
+
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Filters, Updater
 from telegram.ext import CallbackQueryHandler, CommandHandler, MessageHandler
-from teleshop import add_to_cart, create_cart, create_customer
-from teleshop import choose_cart_items_details, get_access_token, get_cart_items 
-from teleshop import get_img_link, get_price, get_products, get_product_details
-from teleshop import delete_from_cart, validate_customer_data
+from teleshop import add_to_cart, choose_cart_items_details
+from teleshop import create_customer, create_cart, get_access_token
+from teleshop import  delete_from_cart, get_cart_items, get_img_link, get_price
+from teleshop import get_products, get_product_details, validate_customer_data 
+ 
 
 _database = None
 
@@ -25,16 +27,16 @@ def start(update, context):
     keyboard = []
     for product in products:
         button = [
-          InlineKeyboardButton(product['name'],
-                              callback_data=product['id'])
-          ]
+            InlineKeyboardButton(product['name'],
+                                 callback_data=product['id'])
+            ]
         keyboard.append(button)
     keyboard.append([InlineKeyboardButton('Корзина',
                                           callback_data='Корзина')])
     reply_markup = InlineKeyboardMarkup(keyboard)
     context.bot.send_message(text='Привет!Мы продаём рыбов. Смотрите. Красивое',
-                            chat_id=update.effective_user.id,
-                            reply_markup=reply_markup)
+                             chat_id=update.effective_user.id,
+                             reply_markup=reply_markup)
     return 'HANDLE_MENU'
 
 
@@ -43,31 +45,28 @@ def handle_menu(update, context):
     query = update.callback_query
     query.answer()
     query.message.delete()
-    keyboard = []
     button_names = ['1', '5', '10', 'Корзина', 'В меню']
-    keyboard.append([ InlineKeyboardButton(
-                                     button_name,
-                                     callback_data=f'{button_name},{query.data}'
-                                     )
-                    ] for button_name in button_names)
+    keyboard = [[
+        InlineKeyboardButton(button_name,
+                             callback_data=f'{button_name},{query.data}')
+        ]for button_name in button_names]
     reply_markup = InlineKeyboardMarkup(keyboard)
     if query.data == 'Корзина':
         handle_cart(update, context)
         return 'HANDLE_CART'
     product_details = get_product_details(access_token, query.data)
     msg = (f'''\
-          {product_details['name']}
-          {product_details['description']}
-          {product_details['price']} за 1 кг
-          {product_details['weight']} кг в 1 шт.
-          ''')
+        {product_details['name']}
+        {product_details['description']}
+        {product_details['price']} за 1 кг
+        {product_details['weight']} кг в 1 шт.
+        ''')
     message = textwrap.dedent(msg)
-    img_lnk = get_img_link(access_token,
-                           product_details['img_id'])
+    img_lnk = get_img_link(access_token, product_details['img_id'])
     context.bot.send_photo(chat_id=query.message.chat_id,
-                          photo=img_lnk,
-                          caption=message,
-                          reply_markup=reply_markup)
+                           photo=img_lnk,
+                           caption=message,
+                           reply_markup=reply_markup)
     logger.info(message)
     return 'HANDLE_DESCRIPTION'
 
@@ -88,8 +87,10 @@ def handle_description(update, context):
     else:
         quantity = int(query.data.split(',')[0])
         product_id = query.data.split(',')[1]
-        add_to_cart(access_token, str(chat_id),
-                    product_id, quantity)
+        add_to_cart(access_token,
+                    str(chat_id),
+                    product_id,
+                    quantity)
         context.bot.send_message(text='добавлено в корзину',
                                  chat_id=chat_id)
         return 'HANDLE_DESCRIPTION'
@@ -100,47 +101,49 @@ def handle_cart(update, context):
     query = update.callback_query
     query.answer()
     chat_id = update.effective_user.id
-    keyboard = [[InlineKeyboardButton('В меню',
-                                      callback_data='В меню')]]
-    cart_items = get_cart_items(access_token,
-                                str(chat_id))
+    keyboard = [[InlineKeyboardButton('В меню', callback_data='В меню')]]
+    cart_items = get_cart_items(access_token, str(chat_id))
     price = get_price(access_token, str(chat_id))
 
     if not cart_items:
         query.message.delete()
         reply_markup = InlineKeyboardMarkup(keyboard)
         context.bot.send_message(text='Корзина пуста',
-                              chat_id=chat_id,
-                              reply_markup=reply_markup)
+                                 chat_id=chat_id,
+                                 reply_markup=reply_markup)
         return 'HANDLE_DESCRIPTION'
 
-  if query.data == 'Оплатить':
-      query.message.delete()
-      message = 'Пришлите свою электронную почту'
-      context.bot.send_message(text=message,
-                               chat_id=chat_id)
-      return 'WAITING_EMAIL'
+    if query.data == 'Оплатить':
+        query.message.delete()
+        message = 'Пришлите свою электронную почту'
+        context.bot.send_message(text=message,
+                                 chat_id=chat_id)
+        return 'WAITING_EMAIL'
 
-  elif query.data == 'В меню':
-      start(update, context)
-      query.message.delete()
-      return 'START'
+    elif query.data == 'В меню':
+        start(update, context)
+        query.message.delete()
+        return 'START'
 
-  elif query.data.split(',')[0] == 'Удалить':
-      delete_from_cart(access_token, str(chat_id),
-                       query.data.split(',')[1])
-      context.bot.send_message(text='удалено из корзины',
-                               chat_id=chat_id)
-      return 'HANDLE_DESCRIPTION'
+    elif query.data.split(',')[0] == 'Удалить':
+        delete_from_cart(access_token,
+                         str(chat_id),
+                         query.data.split(',')[1])
+        context.bot.send_message(text='удалено из корзины',
+                                 chat_id=chat_id)
+        return 'HANDLE_DESCRIPTION'
 
-    keyboard.append([InlineKeyboardButton('Оплатить', callback_data='Оплатить')])
+    keyboard.append([InlineKeyboardButton('Оплатить',
+                                          callback_data='Оплатить')])
     cart_details = choose_cart_items_details(cart_items)
-    keyboard.append([InlineKeyboardButton(
-              f'''Удалить {cart_detail['name']}''',
-              callback_data=f'''Удалить,{cart_detail['product_id']}''')
-                    ] for cart_detail in cart_details)
+    keyboard.append([
+        InlineKeyboardButton(
+            f'''Удалить {cart_detail['name']}''',
+            callback_data=f'''Удалить,{cart_detail['product_id']}'''
+            )for cart_detail in cart_details
+        ])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    msg = create_cart_msg(cart_details, price)
+    msg = create_cart_message(cart_details, price)
     context.bot.send_message(text=msg,
                              chat_id=chat_id,
                              reply_markup=reply_markup)
@@ -164,22 +167,22 @@ def waiting_email(update, context):
         message = 'Вы ранее регистрировались'
     finally:
         context.bot.send_message(text=message,
-                                chat_id=chat_id,
-                                reply_markup=reply_markup)
+                                 chat_id=chat_id,
+                                 reply_markup=reply_markup)
         return 'HANDLE_DESCRIPTION'
 
 
-def create_cart_msg(cart_items_details, price):
+def create_cart_message(cart_items_details, price):
     msgs = []
     for cart_items_detail in cart_items_details:
         name = cart_items_detail['name']
         quantity = cart_items_detail['quantity']
         value_amount = cart_items_detail['value_amount']
-        msg = f'
-                  Вы покупаете {name}
-                  {quantity} кг
-                  Стоимость {value_amount}
-                  '
+        msg = f'''
+              Вы покупаете {name}
+              {quantity} кг
+              Стоимость {value_amount}
+              '''
         msgs.append(msg)
     msgs.append(f'Общая стоимость {price}')
     msg = ' '.join(msgs)
@@ -196,11 +199,11 @@ def handle_users_reply(update, context):
         user_reply = update.callback_query.data
         chat_id = update.callback_query.message.chat_id
     else:
-        return
+      return
     if user_reply == '/start':
-        user_state = 'START'
+      user_state = 'START'
     else:
-        user_state = db.get(chat_id).decode('utf-8')
+      user_state = db.get(chat_id).decode('utf-8')
 
     states_functions = {
         'START': start,
@@ -224,9 +227,9 @@ def get_database_connection():
         database_host = os.getenv('REDIS_ENDPOINT')
         database_port = os.getenv('REDIS_PORT')
         _database = redis.Redis(host=database_host,
-                              port=database_port,
-                              password=database_password)
-        return _database
+                                port=database_port,
+                                password=database_password)
+    return _database
 
 
 if __name__ == '__main__':
@@ -241,9 +244,7 @@ if __name__ == '__main__':
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CallbackQueryHandler(handle_users_reply))
     dispatcher.add_handler(CallbackQueryHandler(handle_menu))
-    dispatcher.add_handler(MessageHandler(Filters.text,
-                                          handle_users_reply))
-    dispatcher.add_handler(CommandHandler('start',
-                                          handle_users_reply))
+    dispatcher.add_handler(MessageHandler(Filters.text, handle_users_reply))
+    dispatcher.add_handler(CommandHandler('start', handle_users_reply))
     updater.start_polling()
     updater.idle()
