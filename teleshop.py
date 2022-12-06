@@ -63,7 +63,7 @@ def get_access_token():
               }
     response = requests.post(url,data=params)
     response.raise_for_status()
-    return f'Bearer {response.json()['access_token']}'
+    return f'''Bearer {response.json()['access_token']}'''
 
 
 def get_cart_items(access_token, client_name):
