@@ -103,13 +103,12 @@ def get_product_details(access_token, product_id):
     response = requests.get(url, headers=headers)
     response.raise_for_status()
     all_product_details = response.json()['data']
-    product_details = {
+    return {
         'name': all_product_details['name'],
         'description': all_product_details['description'],
         'price': all_product_details['meta']['display_price']['with_tax']['formatted'],
         'weight': all_product_details['weight']['kg'],
         'img_id': all_product_details['relationships']['main_image']['data']['id']}
-   return product_details
 
 
 def delete_from_cart(access_token, client_name, product_id):
