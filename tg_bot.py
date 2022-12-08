@@ -227,8 +227,8 @@ if __name__ == '__main__':
 
     updater = Updater(token)
     redis_call = redis.Redis(host=os.getenv('REDIS_ENDPOINT'),
-                            port=os.getenv('REDIS_PORT'),
-                            password=os.getenv('REDIS_PASSWORD'))
+                             port=os.getenv('REDIS_PORT'),
+                             password=os.getenv('REDIS_PASSWORD'))
     
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CallbackQueryHandler(handle_users_reply))

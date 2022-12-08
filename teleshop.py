@@ -55,15 +55,23 @@ def create_customer(access_token, name, email):
     response.json()
 
 
-def get_access_token():
-    url = 'https://api.moltin.com/oauth/access_token'
-    params = {'client_id': os.getenv('CLIENT_ID'),
-              'client_secret': os.getenv('CLIENT_SECRET'),
-              'grant_type': 'client_credentials'
-              }
-    response = requests.post(url,data=params)
-    response.raise_for_status()
-    return f'''Bearer {response.json()['access_token']}'''
+def get_access_token(redis_call):
+    if redis_call.get('access_token'):
+        access_token = redis_call.get('access_token').decode('utf-8')
+    else:
+        url = 'https://api.moltin.com/oauth/access_token'
+        params = {'client_id': os.getenv('CLIENT_ID'),
+                  'client_secret': os.getenv('CLIENT_SECRET'),
+                  'grant_type': 'client_credentials'
+                  }
+        response = requests.post(url,data=params)
+        response.raise_for_status()
+        access_token = f'''Bearer {response.json()['access_token']}'''
+        expires = response.json()['expires_in']
+        db.set('access_token',
+               access_token,
+               ex=expires)
+    return access_token
 
 
 def get_cart_items(access_token, client_name):
@@ -92,7 +100,8 @@ def get_price(access_token, client_name):
 
 def get_products(access_token):
     headers = {'Authorization': access_token}
-    response = requests.get('https://api.moltin.com/v2/products', headers=headers)
+    response = requests.get('https://api.moltin.com/v2/products',
+                            headers=headers)
     response.raise_for_status()
     return response.json()['data']
 
@@ -103,12 +112,13 @@ def get_product_details(access_token, product_id):
     response = requests.get(url, headers=headers)
     response.raise_for_status()
     all_product_details = response.json()['data']
-    return {
+    product_details = {
         'name': all_product_details['name'],
         'description': all_product_details['description'],
         'price': all_product_details['meta']['display_price']['with_tax']['formatted'],
         'weight': all_product_details['weight']['kg'],
         'img_id': all_product_details['relationships']['main_image']['data']['id']}
+   return product_details
 
 
 def delete_from_cart(access_token, client_name, product_id):
