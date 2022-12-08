@@ -55,15 +55,23 @@ def create_customer(access_token, name, email):
     response.json()
 
 
-def get_access_token():
-    url = 'https://api.moltin.com/oauth/access_token'
-    params = {'client_id': os.getenv('CLIENT_ID'),
+def get_access_token(redis_call):
+    if redis_call.get('access_token'):
+        access_token = redis_call.get('access_token').decode('utf-8')
+    else:
+        url = 'https://api.moltin.com/oauth/access_token'
+        params = {'client_id': os.getenv('CLIENT_ID'),
               'client_secret': os.getenv('CLIENT_SECRET'),
               'grant_type': 'client_credentials'
               }
-    response = requests.post(url,data=params)
-    response.raise_for_status()
-    return f'Bearer {response.json()['access_token']}'
+        response = requests.post(url,data=params)
+        response.raise_for_status()
+        access_token = f'''Bearer {response.json()['access_token']}'''
+        expires = response.json()['expires_in']
+        db.set('access_token',
+               access_token,
+               ex=expires)
+    return access_token
 
 
 def get_cart_items(access_token, client_name):

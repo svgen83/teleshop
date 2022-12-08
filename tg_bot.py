@@ -16,13 +16,11 @@ from teleshop import  delete_from_cart, get_cart_items, get_img_link, get_price
 from teleshop import get_products, get_product_details, validate_customer_data 
  
 
-_database = None
-
 logger = logging.getLogger(__name__)
 
 
 def start(update, context):
-    access_token = get_access_token()
+    access_token = get_access_token(redis_call)
     products = get_products(access_token)
     keyboard = []
     for product in products:
@@ -41,7 +39,7 @@ def start(update, context):
 
 
 def handle_menu(update, context):
-    access_token = get_access_token()
+    access_token = get_access_token(redis_call)
     query = update.callback_query
     query.answer()
     query.message.delete()
@@ -72,7 +70,7 @@ def handle_menu(update, context):
 
 
 def handle_description(update, context):
-    access_token = get_access_token()
+    access_token = get_access_token(redis_call)
     query = update.callback_query
     query.answer()
     chat_id = query.message.chat_id
@@ -97,7 +95,7 @@ def handle_description(update, context):
 
 
 def handle_cart(update, context):
-    access_token = get_access_token()
+    access_token = get_access_token(redis_call)
     query = update.callback_query
     query.answer()
     chat_id = update.effective_user.id
@@ -153,7 +151,7 @@ def waiting_email(update, context):
     msg = update.message
     e_mail = msg.text
     chat_id = msg.chat.id
-    access_token = get_access_token()
+    access_token = get_access_token(redis_call)
     keyboard = [[InlineKeyboardButton('В меню',
                                       callback_data='В меню')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -191,7 +189,6 @@ def create_cart_message(cart_items_details, price):
 
 def handle_users_reply(update, context):
 
-    db = get_database_connection()
     if update.message:
         user_reply = update.message.text
         chat_id = update.message.chat_id
@@ -215,21 +212,9 @@ def handle_users_reply(update, context):
     state_handler = states_functions[user_state]
     try:
         next_state = state_handler(update, context)
-        db.set(chat_id, next_state)
+        redis_call.set(chat_id, next_state)
     except Exception as err:
         logger.info(err)
-
-
-def get_database_connection():
-    global _database
-    if _database is None:
-        database_password = os.getenv('REDIS_PASSWORD')
-        database_host = os.getenv('REDIS_ENDPOINT')
-        database_port = os.getenv('REDIS_PORT')
-        _database = redis.Redis(host=database_host,
-                                port=database_port,
-                                password=database_password)
-    return _database
 
 
 if __name__ == '__main__':
@@ -241,6 +226,10 @@ if __name__ == '__main__':
         level=logging.INFO)
 
     updater = Updater(token)
+    redis_call = redis.Redis(host=os.getenv('REDIS_ENDPOINT'),
+                            port=os.getenv('REDIS_PORT'),
+                            password=os.getenv('REDIS_PASSWORD'))
+    
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CallbackQueryHandler(handle_users_reply))
     dispatcher.add_handler(CallbackQueryHandler(handle_menu))
