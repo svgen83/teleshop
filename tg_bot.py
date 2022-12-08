@@ -11,10 +11,10 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Filters, Updater
 from telegram.ext import CallbackQueryHandler, CommandHandler, MessageHandler
 from teleshop import add_to_cart, choose_cart_items_details
-from teleshop import create_customer, create_cart, get_access_token
-from teleshop import  delete_from_cart, get_cart_items, get_img_link, get_price
-from teleshop import get_products, get_product_details, validate_customer_data 
- 
+from teleshop import create_customer, get_access_token
+from teleshop import delete_from_cart, get_cart_items, get_img_link, get_price
+from teleshop import get_products, get_product_details, validate_customer_data
+
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +32,11 @@ def start(update, context):
     keyboard.append([InlineKeyboardButton('Корзина',
                                           callback_data='Корзина')])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    context.bot.send_message(text='Привет!Мы продаём рыбов. Смотрите. Красивое',
-                             chat_id=update.effective_user.id,
-                             reply_markup=reply_markup)
+    context.bot.send_message(
+        text='Привет!Мы продаём рыбов. Смотрите. Красивое',
+        chat_id=update.effective_user.id,
+        reply_markup=reply_markup
+        )
     return 'HANDLE_MENU'
 
 
@@ -196,11 +198,11 @@ def handle_users_reply(update, context):
         user_reply = update.callback_query.data
         chat_id = update.callback_query.message.chat_id
     else:
-      return
+        return
     if user_reply == '/start':
-      user_state = 'START'
+        user_state = 'START'
     else:
-      user_state = db.get(chat_id).decode('utf-8')
+        user_state = redis_call.get(chat_id).decode('utf-8')
 
     states_functions = {
         'START': start,
@@ -229,7 +231,7 @@ if __name__ == '__main__':
     redis_call = redis.Redis(host=os.getenv('REDIS_ENDPOINT'),
                              port=os.getenv('REDIS_PORT'),
                              password=os.getenv('REDIS_PASSWORD'))
-    
+
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CallbackQueryHandler(handle_users_reply))
     dispatcher.add_handler(CallbackQueryHandler(handle_menu))
