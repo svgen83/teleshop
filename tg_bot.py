@@ -1,11 +1,11 @@
-from dotenv import load_dotenv
-
 import os
 import logging
 import redis
 import requests
 import textwrap
 
+from functools import partial
+from dotenv import load_dotenv
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Filters, Updater
@@ -20,7 +20,7 @@ from teleshop import get_products, get_product_details, validate_customer_data
 logger = logging.getLogger(__name__)
 
 
-def start(update, context):
+def start(redis_call, update, context):
     access_token = get_access_token(redis_call)
     products = get_products(access_token)
     keyboard = []
@@ -41,7 +41,7 @@ def start(update, context):
     return 'HANDLE_MENU'
 
 
-def handle_menu(update, context):
+def handle_menu(redis_call, update, context):
     access_token = get_access_token(redis_call)
     query = update.callback_query
     query.answer()
@@ -53,7 +53,7 @@ def handle_menu(update, context):
         ]for button_name in button_names]
     reply_markup = InlineKeyboardMarkup(keyboard)
     if query.data == 'Корзина':
-        handle_cart(update, context)
+        handle_cart(redis_call, update, context)
         return 'HANDLE_CART'
     product_details = get_product_details(access_token, query.data)
     msg = (f'''\
@@ -72,17 +72,17 @@ def handle_menu(update, context):
     return 'HANDLE_DESCRIPTION'
 
 
-def handle_description(update, context):
+def handle_description(redis_call, update, context):
     access_token = get_access_token(redis_call)
     query = update.callback_query
     query.answer()
     chat_id = query.message.chat_id
     if 'В меню' in query.data:
-        start(update, context)
+        start(redis_call, update, context)
         query.message.delete()
         return 'HANDLE_MENU'
     elif query.data.split(',')[0] == 'Корзина':
-        handle_cart(update, context)
+        handle_cart(redis_call, update, context)
         query.message.delete()
         return 'HANDLE_CART'
     else:
@@ -97,7 +97,7 @@ def handle_description(update, context):
         return 'HANDLE_DESCRIPTION'
 
 
-def handle_cart(update, context):
+def handle_cart(redis_call, update, context):
     access_token = get_access_token(redis_call)
     query = update.callback_query
     query.answer()
@@ -122,7 +122,7 @@ def handle_cart(update, context):
         return 'WAITING_EMAIL'
 
     elif query.data == 'В меню':
-        start(update, context)
+        start(redis_call, update, context)
         query.message.delete()
         return 'START'
 
@@ -150,7 +150,7 @@ def handle_cart(update, context):
                              reply_markup=reply_markup)
 
 
-def waiting_email(update, context):
+def waiting_email(redis_call, update, context):
     msg = update.message
     e_mail = msg.text
     chat_id = msg.chat.id
@@ -190,7 +190,7 @@ def create_cart_message(cart_items_details, price):
     return textwrap.dedent(msg)
 
 
-def handle_users_reply(update, context):
+def handle_users_reply(redis_call, update, context):
 
     if update.message:
         user_reply = update.message.text
@@ -206,11 +206,11 @@ def handle_users_reply(update, context):
         user_state = redis_call.get(chat_id).decode('utf-8')
 
     states_functions = {
-        'START': start,
-        'HANDLE_MENU': handle_menu,
-        'HANDLE_DESCRIPTION': handle_description,
-        'HANDLE_CART': handle_cart,
-        'WAITING_EMAIL': waiting_email
+        'START': partial(start, redis_call),
+        'HANDLE_MENU': partial(handle_menu, redis_call),
+        'HANDLE_DESCRIPTION': partial(handle_description, redis_call),
+        'HANDLE_CART': partial(handle_cart, redis_call),
+        'WAITING_EMAIL': partial(waiting_email, redis_call)
         }
     state_handler = states_functions[user_state]
     try:
@@ -220,8 +220,7 @@ def handle_users_reply(update, context):
         logger.info(err)
 
 
-if __name__ == '__main__':
-
+def start_bot():
     load_dotenv()
     token = os.getenv('TG_TOKEN')
     logging.basicConfig(
@@ -234,9 +233,38 @@ if __name__ == '__main__':
                              password=os.getenv('REDIS_PASSWORD'))
 
     dispatcher = updater.dispatcher
-    dispatcher.add_handler(CallbackQueryHandler(handle_users_reply))
-    dispatcher.add_handler(CallbackQueryHandler(handle_menu))
-    dispatcher.add_handler(MessageHandler(Filters.text, handle_users_reply))
-    dispatcher.add_handler(CommandHandler('start', handle_users_reply))
+    dispatcher.add_handler(CallbackQueryHandler(partial(
+        handle_users_reply,
+        redis_call
+        )
+                                                )
+                           )
+    dispatcher.add_handler(CallbackQueryHandler(partial(
+        handle_menu,
+        redis_call
+        )
+                                                )
+                           )
+    dispatcher.add_handler(MessageHandler(
+        Filters.text,
+        partial(handle_users_reply,
+                redis_call
+                )
+        )
+                           )
+    dispatcher.add_handler(CommandHandler(
+        'start',
+        partial(
+            handle_users_reply,
+            redis_call
+            )
+        )
+                           )
     updater.start_polling()
     updater.idle()
+    
+
+if __name__ == '__main__':
+    start_bot()
+
+
