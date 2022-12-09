@@ -28,17 +28,20 @@ def choose_cart_items_details(cart_items):
              'with_tax']['value']['formatted'],
          'value_currency': cart_item['value']['currency']
          } for cart_item in cart_items
-             ]
+        ]
 
 
 def create_cart(access_token, client_name):
-    response = requests.post('https://api.moltin.com/v2/carts/',
-                             headers={'Authorization': access_token,
-                                      'Content-Type': 'application/json'},
-                             json={
-                                 'data': {'name': client_name}
-                                 }
-                             )
+    response = requests.post(
+        'https://api.moltin.com/v2/carts/',
+        headers={
+            'Authorization': access_token,
+            'Content-Type': 'application/json'
+            },
+        json={
+            'data': {'name': client_name}
+            }
+        )
     response.raise_for_status()
     return response.json()
 
@@ -70,8 +73,9 @@ def get_access_token(redis_call):
                   }
         response = requests.post(url, data=params)
         response.raise_for_status()
-        access_token = f'''Bearer {response.json()['access_token']}'''
-        expires = response.json()['expires_in']
+        token_info = response.json()
+        access_token = f'''Bearer {token_info['access_token']}'''
+        expires = token_info['expires_in']
         redis_call.set('access_token',
                        access_token,
                        ex=expires)

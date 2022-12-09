@@ -141,7 +141,7 @@ def handle_cart(update, context):
         InlineKeyboardButton(
             f'''Удалить {cart_detail['name']}''',
             callback_data=f'''Удалить,{cart_detail['product_id']}'''
-            )for cart_detail in cart_details
+            ) for cart_detail in cart_details
         ])
     reply_markup = InlineKeyboardMarkup(keyboard)
     msg = create_cart_message(cart_details, price)
