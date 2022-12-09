@@ -1,4 +1,3 @@
-import json
 import os
 import requests
 
@@ -15,26 +14,31 @@ def add_to_cart(access_token, client_name, product_id, quantity):
             'quantity': quantity
             }
         }
-    response = requests.post(url,headers=headers, json=data)
-    response.raise_for_status()    
+    response = requests.post(url, headers=headers, json=data)
+    response.raise_for_status()
     return response.json()
 
 
 def choose_cart_items_details(cart_items):
-    return  [{'name': cart_item['name'],
-              'product_id':cart_item['product_id'],
-              'quantity': cart_item['quantity'],
-              'value_amount': cart_item['meta']['display_price']['with_tax']['value']['formatted'],
-              'value_currency': cart_item['value']['currency']
-              } for cart_item in cart_items
-             ] 
+    return [
+        {'name': cart_item['name'],
+         'product_id':cart_item['product_id'],
+         'quantity': cart_item['quantity'],
+         'value_amount': cart_item['meta']['display_price'][
+             'with_tax']['value']['formatted'],
+         'value_currency': cart_item['value']['currency']
+         } for cart_item in cart_items
+             ]
 
-  
+
 def create_cart(access_token, client_name):
     response = requests.post('https://api.moltin.com/v2/carts/',
                              headers={'Authorization': access_token,
-                             'Content-Type': 'application/json'},
-                             json = {'data':{'name':client_name}})                                         
+                                      'Content-Type': 'application/json'},
+                             json={
+                                 'data': {'name': client_name}
+                                 }
+                             )
     response.raise_for_status()
     return response.json()
 
@@ -64,13 +68,13 @@ def get_access_token(redis_call):
                   'client_secret': os.getenv('CLIENT_SECRET'),
                   'grant_type': 'client_credentials'
                   }
-        response = requests.post(url,data=params)
+        response = requests.post(url, data=params)
         response.raise_for_status()
         access_token = f'''Bearer {response.json()['access_token']}'''
         expires = response.json()['expires_in']
-        db.set('access_token',
-               access_token,
-               ex=expires)
+        redis_call.set('access_token',
+                       access_token,
+                       ex=expires)
     return access_token
 
 
@@ -79,7 +83,7 @@ def get_cart_items(access_token, client_name):
     headers = {'Authorization': access_token}
     response = requests.get(url, headers=headers)
     response.raise_for_status()
-    return response.json()['data']  
+    return response.json()['data']
 
 
 def get_img_link(access_token, img_id):
@@ -95,7 +99,8 @@ def get_price(access_token, client_name):
     headers = {'Authorization': access_token}
     response = requests.get(url, headers=headers)
     response.raise_for_status()
-    return response.json()['data']['meta']['display_price']['with_tax']['formatted']
+    return response.json()['data']['meta'][
+        'display_price']['with_tax']['formatted']
 
 
 def get_products(access_token):
@@ -115,10 +120,12 @@ def get_product_details(access_token, product_id):
     product_details = {
         'name': all_product_details['name'],
         'description': all_product_details['description'],
-        'price': all_product_details['meta']['display_price']['with_tax']['formatted'],
+        'price': all_product_details['meta']['display_price'][
+            'with_tax']['formatted'],
         'weight': all_product_details['weight']['kg'],
-        'img_id': all_product_details['relationships']['main_image']['data']['id']}
-   return product_details
+        'img_id': all_product_details['relationships'][
+            'main_image']['data']['id']}
+    return product_details
 
 
 def delete_from_cart(access_token, client_name, product_id):
@@ -135,7 +142,9 @@ def validate_customer_data(access_token, client_name):
     response.raise_for_status()
     customers = response.json()['data']
     for customer in customers:
-      if customer['name'] == client_name:
-          msg = f'''Пользователь {customer['name']} зарегистрирован
-                    Адрес электронной почты для обратной связи {customer['email']}'''
-          return msg
+        if customer['name'] == client_name:
+            msg = f'''Пользователь {customer['name']}
+                    зарегистрирован.
+                    Адрес электронной почты
+                    для обратной связи {customer['email']}'''
+            return msg
