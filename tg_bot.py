@@ -233,32 +233,17 @@ def start_bot():
                              password=os.getenv('REDIS_PASSWORD'))
 
     dispatcher = updater.dispatcher
-    dispatcher.add_handler(CallbackQueryHandler(partial(
-        handle_users_reply,
-        redis_call
-        )
-                                                )
+    dispatcher.add_handler(CallbackQueryHandler(
+        partial(handle_users_reply, redis_call))
                            )
-    dispatcher.add_handler(CallbackQueryHandler(partial(
-        handle_menu,
-        redis_call
-        )
-                                                )
+    dispatcher.add_handler(CallbackQueryHandler(
+        partial(handle_menu, redis_call))
                            )
     dispatcher.add_handler(MessageHandler(
-        Filters.text,
-        partial(handle_users_reply,
-                redis_call
-                )
-        )
+        Filters.text, partial(handle_users_reply, redis_call))
                            )
     dispatcher.add_handler(CommandHandler(
-        'start',
-        partial(
-            handle_users_reply,
-            redis_call
-            )
-        )
+        'start', partial(handle_users_reply, redis_call))
                            )
     updater.start_polling()
     updater.idle()

@@ -34,13 +34,9 @@ def choose_cart_items_details(cart_items):
 def create_cart(access_token, client_name):
     response = requests.post(
         'https://api.moltin.com/v2/carts/',
-        headers={
-            'Authorization': access_token,
-            'Content-Type': 'application/json'
-            },
-        json={
-            'data': {'name': client_name}
-            }
+        headers={'Authorization': access_token,
+                 'Content-Type': 'application/json'},
+        json={'data': {'name': client_name}}
         )
     response.raise_for_status()
     return response.json()
@@ -50,13 +46,10 @@ def create_customer(access_token, name, email):
     url = 'https://api.moltin.com/v2/customers'
     headers = {'Authorization': access_token,
                'Content-Type': 'application/json'}
-    json_data = {
-        'data': {
-            'type': 'customer',
-            'name': name,
-            'email': email,
-            'password': 'password'
-            }}
+    json_data = {'data': {'type': 'customer',
+                          'name': name,
+                          'email': email,
+                          'password': 'password'}}
     response = requests.post(url, headers=headers, json=json_data)
     response.raise_for_status()
     response.json()
