@@ -1,4 +1,7 @@
-python-dotenv==0.21.0
+python-dotenv==1.0.0
+
 python-telegram-bot==13.14
-redis==4.3.4
-requests==2.28.1
+
+requests==2.31.0
+
+upstash-redis==0.15.0
