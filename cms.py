@@ -1,7 +1,5 @@
-import io
 import os
 import requests
-import json
 
 
 def get_products(access_token):
@@ -10,7 +8,7 @@ def get_products(access_token):
     response = requests.get(url, headers=headers)
     response.raise_for_status()
     return response.json()['data']
-    
+
 
 def get_product(access_token, product_id):
     url = ''.join([os.getenv("CMS_SCHEME"), '/api/products', f'/{product_id}'])
@@ -25,7 +23,7 @@ def get_image_url(access_token, product_id):
                    '/api/products', f'/{product_id}'])
     headers = {'Authorization': access_token}
     data = {'populate': 'picture'}
-    response = requests.get(url, headers=headers, params = data)
+    response = requests.get(url, headers=headers, params=data)
     response.raise_for_status()
     img_url = response.json()[
         'data']['attributes']['picture'][
@@ -34,21 +32,20 @@ def get_image_url(access_token, product_id):
 
 
 def load_image(image_url, access_token, product_id):
-    response =  requests.get(image_url,
-                             headers = {
-                                 'Authorization': access_token})
+    response = requests.get(image_url,
+                            headers={'Authorization': access_token})
     response.raise_for_status()
     image_path = f'{product_id}.jpg'
     with open(image_path, 'wb') as file:
-      file.write(response.content)
+        file.write(response.content)
     return image_path
 
-    
+
 def get_carts(access_token):
     url = ''.join([os.getenv("CMS_SCHEME"), '/api/carts'])
     headers = {'Authorization': access_token}
     data = {'populate': '*'}
-    response = requests.get(url, headers=headers, params = data)
+    response = requests.get(url, headers=headers, params=data)
     response.raise_for_status()
     return response.json()['data']
 
@@ -56,7 +53,7 @@ def get_carts(access_token):
 def create_cart(access_token, chat_id):
     url = ''.join([os.getenv("CMS_SCHEME"), '/api/carts'])
     headers = {'Authorization': access_token}
-    data = {'data':{'tg_id': chat_id}}
+    data = {'data': {'tg_id': chat_id}}
     response = requests.post(url, headers=headers, json=data)
     response.raise_for_status()
     return response.json()['data']
@@ -69,7 +66,8 @@ def get_cart_product_details(access_token, cart_product_id):
     data = {'populate': '*'}
     response = requests.get(url, headers=headers, params=data)
     response.raise_for_status()
-    return response.json()['data']['attributes']['product']['data']['attributes']
+    return response.json()['data']['attributes']['product'][
+        'data']['attributes']
 
 
 def get_cart_details(user_cart, access_token):
@@ -87,7 +85,7 @@ def get_cart_details(user_cart, access_token):
             cart_details.append({'product_id': cart_product['id'],
                                  'title': title,
                                  'price': price,
-                                 'quantity':quantity,
+                                 'quantity': quantity,
                                  'total_price': total_price})
     return cart_details
 
@@ -95,7 +93,7 @@ def get_cart_details(user_cart, access_token):
 def get_or_create_user_cart(access_token, chat_id):
     carts = get_carts(access_token)
     for cart in carts:
-        if cart['attributes']['tg_id']==chat_id:
+        if cart['attributes']['tg_id'] == chat_id:
             user_cart = cart
     if not user_cart:
         user_cart = create_cart(access_token, chat_id)
@@ -107,7 +105,7 @@ def add_to_cart(access_token, cart_id, product_id, quantity):
     headers = {'Authorization': access_token}
     data = {'data': {'quantity': quantity,
                      'populate': '*',
-                     'product' : product_id,
+                     'product': product_id,
                      'cart': cart_id
                      }}
     response = requests.post(url, headers=headers, json=data)
@@ -129,15 +127,15 @@ def get_or_create_customer(access_token, client_name, email):
     url = ''.join([os.getenv("CMS_SCHEME"), '/api/users'])
     headers = {'Authorization': access_token}
     data = {'username': client_name,
-                    'password': 'password',
-                    'email': email}
+            'password': 'password',
+            'email': email}
     response = requests.get(url, headers=headers)
     response.raise_for_status()
     users = response.json()
     customer = [
         user for user in users if user['username'] == client_name]
     if customer:
-        return  f'''Пользователь таким именем уже зарегистирован'''
+        return '''Пользователь таким именем уже зарегистирован'''
     else:
         response = requests.post(url, headers=headers, json=data)
         response.raise_for_status()

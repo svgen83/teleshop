@@ -2,18 +2,17 @@ import os
 import logging
 import requests
 import textwrap
-import json
 
 from upstash_redis import Redis
 from dotenv import load_dotenv
 from functools import partial
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, InputMediaPhoto
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Filters, Updater
 from telegram.ext import CallbackQueryHandler, CommandHandler, MessageHandler
 
 from cms import get_products, get_product, get_image_url
-from cms import load_image, get_cart_product_details, get_carts, get_cart_details
+from cms import load_image, get_cart_details
 from cms import add_to_cart, delete_from_cart, get_or_create_user_cart
 from cms import get_or_create_customer
 
@@ -31,7 +30,7 @@ def start(cms_token, update, context):
             ]
         keyboard.append(button)
     keyboard.append([InlineKeyboardButton('Корзина',
-                                          callback_data='Корзина')])    
+                                          callback_data='Корзина')])
     reply_markup = InlineKeyboardMarkup(keyboard)
     context.bot.send_message(text='Пожалуйста, выбирайте:',
                              chat_id=update.effective_user.id,
@@ -43,7 +42,6 @@ def handle_menu(cms_token, update, context):
     query = update.callback_query
     query.answer()
     query.message.delete()
-    chat_id = query.message.chat_id
     button_names = ['1', '2', '3', 'Корзина', 'В меню']
     keyboard = [[
         InlineKeyboardButton(button_name,
@@ -53,10 +51,10 @@ def handle_menu(cms_token, update, context):
     if query.data == 'Корзина':
         handle_cart(cms_token, update, context)
         return 'HANDLE_CART'
-    
+
     product = get_product(cms_token, query.data)
     msg = textwrap.dedent(product['attributes']['description'])
-    
+
     img_lnk = get_image_url(cms_token, query.data)
     product_image = load_image(img_lnk, cms_token, query.data)
     with open(product_image, 'rb') as image:
@@ -105,7 +103,7 @@ def handle_cart(cms_token, update, context):
                                  chat_id=chat_id,
                                  reply_markup=reply_markup)
         return 'HANDLE_DESCRIPTION'
-        
+
     if query.data == 'Оплатить':
         query.message.delete()
         message = 'Пришлите свою электронную почту'
@@ -136,7 +134,6 @@ def handle_cart(cms_token, update, context):
                              chat_id=chat_id,
                              reply_markup=reply_markup)
     return 'HANDLE_DESCRIPTION'
-
 
 
 def waiting_email(cms_token, update, context):
@@ -215,19 +212,15 @@ def start_bot():
     updater = Updater(token)
 
     dispatcher = updater.dispatcher
-    
+
     dispatcher.add_handler(CallbackQueryHandler(
-        partial(handle_users_reply, cms_token))
-                           )
+        partial(handle_users_reply, cms_token)))
     dispatcher.add_handler(CallbackQueryHandler(
-        partial(handle_menu, cms_token))
-                           )
+        partial(handle_menu, cms_token)))
     dispatcher.add_handler(MessageHandler(
-        Filters.text, partial(handle_users_reply, cms_token))
-                           )
+        Filters.text, partial(handle_users_reply, cms_token)))
     dispatcher.add_handler(CommandHandler(
-        'start', partial(handle_users_reply, cms_token))
-                           )
+        'start', partial(handle_users_reply, cms_token)))
     updater.start_polling()
     updater.idle()
 
