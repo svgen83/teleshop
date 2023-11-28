@@ -16,6 +16,7 @@ pip install -r requirements.txt
 * `description` - описание товара,
 * `picture` - изображение товара,
 * `price` -цена товара
+  
 В модели `Cart` создайте поле `tg_id` для идентификации пользователя в телеграмм-чате.
 В модели `Cart_product` создайте поле `quantity` для хранения данных о количестве товаров.
 Далее [установите связи моделей](https://docs.strapi.io/user-docs/content-type-builder/configuring-fields-content-type#-relation):
