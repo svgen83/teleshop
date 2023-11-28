@@ -1,4 +1,4 @@
-#Teleshop
+# Teleshop
 
 This program is an online store application created on the [Strapi](https://docs.strapi.io/) platform
 
