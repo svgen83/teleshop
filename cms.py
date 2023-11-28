@@ -87,17 +87,16 @@ def get_cart_details(user_cart, access_token):
                                  'price': price,
                                  'quantity': quantity,
                                  'total_price': total_price})
-    return cart_details
+        return cart_details
 
 
 def get_or_create_user_cart(access_token, chat_id):
     carts = get_carts(access_token)
-    for cart in carts:
-        if cart['attributes']['tg_id'] == chat_id:
-            user_cart = cart
+    user_cart = [
+        cart for cart in carts if cart['attributes']['tg_id'] == chat_id]
     if not user_cart:
-        user_cart = create_cart(access_token, chat_id)
-    return user_cart
+        user_cart = [create_cart(access_token, chat_id)]
+    return user_cart[0]
 
 
 def add_to_cart(access_token, cart_id, product_id, quantity):
@@ -110,7 +109,6 @@ def add_to_cart(access_token, cart_id, product_id, quantity):
                      }}
     response = requests.post(url, headers=headers, json=data)
     response.raise_for_status()
-    print(response.json())
     return response.ok
 
 
