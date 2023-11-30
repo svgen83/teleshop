@@ -40,7 +40,7 @@ CMS_TOKEN="bearer Токен администратора Strapi"
 ```
 *  Схема адреса Strapi:
 ```
-CMS_SCHEME = "http://localhost:1337"
+CMS_SCHEME = "http://localhost:1337/"
 ``` 
 Если вы запускаете бот с удаленного сервера, то следует вместо `localhost` прописать его IP адрес.
 
