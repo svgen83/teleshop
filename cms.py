@@ -1,9 +1,11 @@
 import os
 import requests
 
+from urllib.parse import urljoin
+
 
 def get_products(access_token):
-    url = ''.join([os.getenv("CMS_SCHEME"), '/api/products'])
+    url = urljoin(os.getenv("CMS_SCHEME"), '/api/products')
     headers = {'Authorization': access_token}
     response = requests.get(url, headers=headers)
     response.raise_for_status()
@@ -11,7 +13,7 @@ def get_products(access_token):
 
 
 def get_product(access_token, product_id):
-    url = ''.join([os.getenv("CMS_SCHEME"), '/api/products', f'/{product_id}'])
+    url = urljoin(os.getenv("CMS_SCHEME"), f'/api/products/{product_id}')
     headers = {'Authorization': access_token}
     response = requests.get(url, headers=headers)
     response.raise_for_status()
@@ -19,8 +21,8 @@ def get_product(access_token, product_id):
 
 
 def get_image_url(access_token, product_id):
-    url = ''.join([os.getenv("CMS_SCHEME"),
-                   '/api/products', f'/{product_id}'])
+    url = urljoin([os.getenv("CMS_SCHEME"),
+                   f'/api/products/{product_id}')
     headers = {'Authorization': access_token}
     data = {'populate': 'picture'}
     response = requests.get(url, headers=headers, params=data)
@@ -28,7 +30,7 @@ def get_image_url(access_token, product_id):
     img_url = response.json()[
         'data']['attributes']['picture'][
             'data'][0]['attributes']['url']
-    return ''.join([os.getenv("CMS_SCHEME"), img_url])
+    return urljoin(os.getenv("CMS_SCHEME"), img_url)
 
 
 def load_image(image_url, access_token, product_id):
@@ -42,7 +44,7 @@ def load_image(image_url, access_token, product_id):
 
 
 def get_carts(access_token):
-    url = ''.join([os.getenv("CMS_SCHEME"), '/api/carts'])
+    url = urljoin(os.getenv("CMS_SCHEME"), '/api/carts')
     headers = {'Authorization': access_token}
     data = {'populate': '*'}
     response = requests.get(url, headers=headers, params=data)
@@ -51,7 +53,7 @@ def get_carts(access_token):
 
 
 def create_cart(access_token, chat_id):
-    url = ''.join([os.getenv("CMS_SCHEME"), '/api/carts'])
+    url = urljoin(os.getenv("CMS_SCHEME"), '/api/carts')
     headers = {'Authorization': access_token}
     data = {'data': {'tg_id': chat_id}}
     response = requests.post(url, headers=headers, json=data)
@@ -60,8 +62,8 @@ def create_cart(access_token, chat_id):
 
 
 def get_cart_product_details(access_token, cart_product_id):
-    url = ''.join([os.getenv("CMS_SCHEME"),
-                   f'/api/cart-products/{cart_product_id}'])
+    url = urljoin(os.getenv("CMS_SCHEME"),
+                  f'/api/cart-products/{cart_product_id}')
     headers = {'Authorization': access_token}
     data = {'populate': '*'}
     response = requests.get(url, headers=headers, params=data)
@@ -100,7 +102,7 @@ def get_or_create_user_cart(access_token, chat_id):
 
 
 def add_to_cart(access_token, cart_id, product_id, quantity):
-    url = ''.join([os.getenv("CMS_SCHEME"), '/api/cart-products'])
+    url = urljoin(os.getenv("CMS_SCHEME"), '/api/cart-products')
     headers = {'Authorization': access_token}
     data = {'data': {'quantity': quantity,
                      'populate': '*',
@@ -113,8 +115,8 @@ def add_to_cart(access_token, cart_id, product_id, quantity):
 
 
 def delete_from_cart(access_token, cart_product_id):
-    url = ''.join([os.getenv("CMS_SCHEME"),
-                   f'/api/cart-products/{cart_product_id}'])
+    url = urljoin(os.getenv("CMS_SCHEME"),
+                  f'/api/cart-products/{cart_product_id}')
     headers = {'Authorization': access_token}
     response = requests.delete(url, headers=headers)
     response.raise_for_status()
@@ -122,7 +124,7 @@ def delete_from_cart(access_token, cart_product_id):
 
 
 def get_or_create_customer(access_token, client_name, email):
-    url = ''.join([os.getenv("CMS_SCHEME"), '/api/users'])
+    url = urljoin(os.getenv("CMS_SCHEME"), '/api/users')
     headers = {'Authorization': access_token}
     data = {'username': client_name,
             'password': 'password',
