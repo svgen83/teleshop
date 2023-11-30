@@ -39,7 +39,7 @@ CMS_TOKEN="bearer Strapi admin token"
 ```
 * Strapi address scheme:
 ```
-CMS_SCHEME = "http://localhost:1337"
+CMS_SCHEME = "http://localhost:1337/"
 ```
 If you are launching a bot from a remote server, you should enter its IP address instead of `localhost`.
 
