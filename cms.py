@@ -21,8 +21,8 @@ def get_product(access_token, product_id):
 
 
 def get_image_url(access_token, product_id):
-    url = urljoin([os.getenv("CMS_SCHEME"),
-                   f'/api/products/{product_id}')
+    url = urljoin(os.getenv("CMS_SCHEME"),
+                  f'/api/products/{product_id}')
     headers = {'Authorization': access_token}
     data = {'populate': 'picture'}
     response = requests.get(url, headers=headers, params=data)
